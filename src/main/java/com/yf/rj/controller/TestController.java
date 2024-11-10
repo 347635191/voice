@@ -1,0 +1,44 @@
+package com.yf.rj.controller;
+
+import com.yf.rj.cache.CategoryDb;
+import com.yf.rj.cache.Mp3Db;
+import com.yf.rj.vo.Result;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+
+@RestController
+@RequestMapping("/test")
+public class TestController {
+    @Resource
+    private ApplicationContext applicationContext;
+
+    @GetMapping("/pool")
+    public Result pool() {
+        LettuceClientConfiguration clientConfiguration = ((LettuceConnectionFactory) applicationContext.getBean(RedisConnectionFactory.class)).getClientConfiguration();
+        return Result.success(clientConfiguration.getClass().getName());
+    }
+
+    @GetMapping("/categoryDbSize")
+    public Result categoryDbSize() {
+        return Result.success(CategoryDb.queryAll().size());
+    }
+
+    @GetMapping("/mp3DbSize")
+    public Result mp3DbSize() {
+        return Result.success(Mp3Db.queryAll().size());
+    }
+
+    @GetMapping("/mp3DbByRj")
+    public Result mp3DbByRj(String rj) {
+        return Result.success(Mp3Db.queryByRj(rj));
+    }
+}

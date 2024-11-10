@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.202.111:8848
+      username: nacos
+      password: 293032
+      discovery:
+        namespace: 35aea386-62a4-4605-ba7b-910dc88ffa64
+        group: ${spring.profiles.active}
+      config:
+        namespace: 35aea386-62a4-4605-ba7b-910dc88ffa64
+        group: ${spring.profiles.active}

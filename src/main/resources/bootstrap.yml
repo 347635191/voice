@@ -1,0 +1,50 @@
+server:
+  port: 9006
+  shutdown: graceful
+
+spring:
+  cloud:
+    nacos:
+      config:
+        namespace: 35aea386-62a4-4605-ba7b-910dc88ffa64
+        file-extension: yml
+        group: ${spring.profiles.active}
+        extension-configs:
+          - data-id: zzz-base.yml
+            group: ${spring.profiles.active}
+            refresh: true
+        shared-configs:
+          - data-id: zzz-base.yml
+            group: DEFAULT_GROUP
+            refresh: true
+
+  datasource:
+    hikari:
+      max-lifetime: 100000000
+      idle-timeout: 10000000
+      connection-timeout: 600000
+      maximum-pool-size: 500
+      minimum-idle: 20
+      validation-timeout: 300000
+  profiles:
+    active: ${ENV:dev}
+  application:
+    name: voice
+
+mybatis:
+  mapper-locations: classpath:mybatis/mapper/*Mapper.xml
+  configuration:
+    call-setters-on-nulls: true
+    map-underscore-to-camel-case: true
+    default-fetch-size: 50
+    default-statement-timeout: 10
+    auto-mapping-unknown-column-behavior: WARNING
+
+#log配置
+logging:
+  config: classpath:logback-config.xml
+  level:
+    root: info
+    org.springframework.boot.autoconfigure: error
+    org.jaudiotagger.*: error
+    com.yf.rj.mapper: info

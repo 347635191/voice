@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yf.rj.mapper.CategoryMapper">
+    <sql id="base_column">
+        id,
+        one_category,
+        two_category,
+        create_time,
+        update_time
+    </sql>
+
+    <select id="queryAll" resultType="com.yf.rj.entity.CategoryT">
+        select
+        <include refid="base_column"/>
+        from category_t
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into category_t (one_category, two_category, create_time, update_time)
+        values (#{oneCategory}, #{twoCategory}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="truncate" useGeneratedKeys="true" keyProperty="id">
+        truncate table category_t;
+    </update>
+</mapper>

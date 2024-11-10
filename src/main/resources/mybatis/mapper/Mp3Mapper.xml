@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yf.rj.mapper.Mp3Mapper">
+    <sql id="base_column">
+        id,
+        rj,
+        rj_name,
+        seq,
+        file_name,
+        title,
+        album,
+        category_id,
+        bit_rate,
+        artist,
+        year,
+        genre,
+        comment,
+        series,
+        composer,
+        create_time,
+        update_time
+    </sql>
+
+    <select id="queryAll" resultType="com.yf.rj.entity.Mp3T">
+        select
+        <include refid="base_column"/>
+        from mp3_t
+    </select>
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        <if test="list != null and list.size() > 0">
+            insert into mp3_t(rj,rj_name,seq,file_name,title,album,bit_rate,artist,year,
+            genre,comment,series,composer,create_time,update_time,category_id)
+            values
+            <foreach collection="list" item="po" separator=",">
+                (#{po.rj},#{po.rjName},#{po.seq},#{po.fileName},#{po.title},#{po.album},
+                #{po.bitRate},#{po.artist},#{po.year},#{po.genre}, #{po.comment},
+                #{po.series},#{po.composer},#{po.createTime},#{po.updateTime},#{po.categoryId}
+                )
+            </foreach>
+            # on duplicate key update
+            # rj = values(rj),
+            # rj_name = values(rj_name),
+            # seq = values(seq),
+            # file_name = values(file_name),
+            # title = values(title),
+            # album = values(album),
+            # bit_rate = values(bit_rate),
+            # artist = values(artist),
+            # year = values(year),
+            # genre = values(genre),
+            # comment = values(comment),
+            # series = values(series),
+            # composer = values(composer),
+            # update_time = values(update_time)
+        </if>
+    </insert>
+
+    <update id="truncate" useGeneratedKeys="true" keyProperty="id">
+        truncate table mp3_t;
+    </update>
+</mapper>
