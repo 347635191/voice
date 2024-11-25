@@ -5,7 +5,6 @@ import com.yf.rj.vo.Result;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,7 +15,7 @@ import java.util.Optional;
 
 @ControllerAdvice
 public class SpringControllerAdvice {
-    private static final Logger log = LoggerFactory.getLogger(SpringControllerAdvice.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpringControllerAdvice.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
@@ -41,7 +40,7 @@ public class SpringControllerAdvice {
     @ExceptionHandler
     @ResponseBody
     public Result exceptionHandler(Throwable e) {
-        log.warn("内部异常", e);
+        LOG.warn("内部异常", e);
         return Result.fail("服务器内部错误");
     }
 
@@ -54,6 +53,7 @@ public class SpringControllerAdvice {
     @ExceptionHandler(RuntimeException.class)
     @ResponseBody
     public Result runtimeExceptionHandler(RuntimeException e) {
+        LOG.error("运行时异常：{}", String.valueOf(e));
         return Result.fail(e.getMessage());
     }
 }

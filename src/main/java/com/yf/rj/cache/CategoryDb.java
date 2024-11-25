@@ -4,10 +4,8 @@ import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.TransactionalIndexedCollection;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.compound.CompoundIndex;
-import com.googlecode.cqengine.index.hash.HashIndex;
 import com.googlecode.cqengine.index.unique.UniqueIndex;
 import com.googlecode.cqengine.query.simple.Equal;
-import com.googlecode.cqengine.query.simple.In;
 import com.googlecode.cqengine.resultset.ResultSet;
 import com.yf.rj.entity.CategoryT;
 import lombok.AccessLevel;
@@ -25,7 +23,7 @@ import static com.googlecode.cqengine.query.QueryFactory.*;
 @SuppressWarnings("unchecked")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CategoryDb {
-    private static final Logger log = LoggerFactory.getLogger(CategoryDb.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CategoryDb.class);
     private static final IndexedCollection<CategoryT> CACHE;
 
     static {
@@ -76,14 +74,14 @@ public class CategoryDb {
         }
     }
 
-    public static String queryUniById(Integer id){
+    public static CategoryT queryById(Integer id){
         try (ResultSet<CategoryT> result = CACHE.retrieve(equal(Index.ID, id))) {
-            return result.uniqueResult().getUniKey();
+            return result.uniqueResult();
         }
     }
 
     public static void clear(){
-        log.info("清空分类缓存：{}", CACHE.size());
+        LOG.info("清空分类缓存：{}", CACHE.size());
         CACHE.clear();
     }
 }

@@ -1,14 +1,20 @@
 package com.yf.rj;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
+
+/**
+ * 〇
+ */
 //@MapperScan(basePackages = {"com.yf.rj.mapper"})
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class VoiceRunner {
     public static void main(String[] args) {
-        SpringApplication.run(VoiceRunner.class, args);
+        SpringApplicationBuilder builder = new SpringApplicationBuilder(VoiceRunner.class);
+        //解决不能使用剪切板的问题
+        builder.headless(false).run(args);
     }
 }

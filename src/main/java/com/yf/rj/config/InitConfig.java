@@ -16,7 +16,7 @@ import java.util.List;
 
 @Configuration
 public class InitConfig {
-    private static final Logger log = LoggerFactory.getLogger(InitConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InitConfig.class);
 
     @Resource
     private CategoryMapper categoryMapper;
@@ -32,12 +32,12 @@ public class InitConfig {
     private void loadCategory() {
         List<CategoryT> categoryList = categoryMapper.queryAll();
         CategoryDb.upset(categoryList, false);
-        log.info("全部分类加载成功：{}", categoryList.size());
+        LOG.info("全部分类加载成功：{}", categoryList.size());
     }
 
     private void loadMp3() {
         List<Mp3T> mp3List = mp3Mapper.queryAll();
         Mp3Db.upset(mp3List, false);
-        log.info("全部音声加载成功：{}", mp3List.size());
+        LOG.info("全部音声加载成功：{}", mp3List.size());
     }
 }

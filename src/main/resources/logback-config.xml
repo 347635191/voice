@@ -82,18 +82,6 @@
         </encoder>
     </appender>
 
-    <appender name="DAO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-       <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!--日志文件输出的文件名-->
-            <FileNamePattern>${BASE_PATH}/${APP_NAME}/${PROFILE}/dao_%d{yyyy-MM-dd}.log</FileNamePattern>
-            <!--日志文件保留天数-->
-            <maxHistory>${maxHistory}</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <!-- root级别   INFO -->
     <root level="INFO">
         <!-- 控制台输出 -->

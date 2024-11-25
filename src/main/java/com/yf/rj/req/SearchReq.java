@@ -10,6 +10,7 @@ import javax.validation.constraints.Pattern;
 public class SearchReq {
     /**
      * Mp3IndexEnum.code
+     * LrcSearchEnum.code
      */
     @NotBlank
     @Pattern(regexp = "[0123456a]")

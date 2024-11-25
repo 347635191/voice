@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-public class FullDispatchHandler implements FileUnify {
-    private static final Logger log = LoggerFactory.getLogger(FullDispatchHandler.class);
+public class FullDispatchHandler implements FileUnify<Object> {
+    private static final Logger LOG = LoggerFactory.getLogger(FullDispatchHandler.class);
     private ArrayBlockingQueue<Mp3T> mp3SyncQueue;
 
     @Value("${fullDispatch.totalQueueSize}")
@@ -50,7 +50,7 @@ public class FullDispatchHandler implements FileUnify {
     @PostConstruct
     public void init() {
         if (!enabled) {
-            log.info("全量mp3同步分发队已关闭");
+            LOG.info("全量mp3同步分发队已关闭");
             return;
         }
         mp3SyncQueue = new ArrayBlockingQueue<>(totalQueueSize);
@@ -58,12 +58,12 @@ public class FullDispatchHandler implements FileUnify {
                 new BasicThreadFactory.Builder().namingPattern("mp3-sync-full-%d").build(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
         executorService.scheduleAtFixedRate(new Mp3DispatchWork(), 0, 5, TimeUnit.SECONDS);
-        log.info("全量mp3同步分发队列已开启，totalQueueSize：{}", totalQueueSize);
+        LOG.info("全量mp3同步分发队列已开启，totalQueueSize：{}", totalQueueSize);
     }
 
     @Override
     public boolean handleSecond(File file) {
-        if (FileTypeEnum.DIR.matches(file)) {
+        if (FileTypeEnum.DIR.match(file)) {
             CategoryT categoryT = new CategoryT();
             categoryT.setOneCategory(FileUtil.getOneCategory(file));
             categoryT.setTwoCategory(FileUtil.getTwoCategory(file));
@@ -77,16 +77,16 @@ public class FullDispatchHandler implements FileUnify {
 
     @Override
     public void handleFourth(File file) {
-        if (FileTypeEnum.MP3.matches(file)) {
+        if (FileTypeEnum.MP3.match(file)) {
             CompletableFuture.runAsync(() -> {
                 try {
                     Mp3T mp3T = buildMp3T(file);
                     mp3SyncQueue.put(mp3T);
                 } catch (InterruptedException e) {
-                    log.error("mp3入队失败，文件名：{}", file.getName());
+                    LOG.error("mp3入队失败，文件名：{}", file.getName());
                 }
             }, ioExecutor).exceptionally(e -> {
-                log.info("ioExecutor failed：{}", file.getAbsolutePath(), e);
+                LOG.info("ioExecutor failed：{}", file.getAbsolutePath(), e);
                 return null;
             });
         }
@@ -105,9 +105,9 @@ public class FullDispatchHandler implements FileUnify {
             try {
                 mp3Mapper.batchInsert(collect);
                 Mp3Db.upset(collect, false);
-                log.info("全量mp3分批入库成功，总条数：{}", collect.size());
+                LOG.info("全量mp3分批入库成功，总条数：{}", collect.size());
             } catch (Exception e) {
-                log.error("全量mp3分批入库失败", e);
+                LOG.error("全量mp3分批入库失败", e);
             }
         }
     }
@@ -146,7 +146,9 @@ public class FullDispatchHandler implements FileUnify {
     public void clearData() {
         CategoryDb.clear();
         Mp3Db.clear();
-        log.info("清空分类表：{}", categoryMapper.truncate());
-        log.info("清空音频表：{}", mp3Mapper.truncate());
+        categoryMapper.truncate();
+        LOG.info("清空分类表");
+        mp3Mapper.truncate();
+        LOG.info("清空音频表");
     }
 }

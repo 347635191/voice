@@ -13,5 +13,5 @@ public interface Mp3Mapper {
 
     int batchInsert(@Param("list") List<Mp3T> mp3TList);
 
-    int truncate();
+    void truncate();
 }

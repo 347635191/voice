@@ -1,6 +1,7 @@
 package com.yf.rj.entity;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class Mp3T {
@@ -66,5 +67,9 @@ public class Mp3T {
 
     public String getUniKey() {
         return rj + seq;
+    }
+
+    public String getUnionName() {
+        return rj + StringUtils.SPACE + fileName;
     }
 }

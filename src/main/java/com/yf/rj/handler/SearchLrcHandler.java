@@ -15,7 +15,7 @@ import java.util.List;
 @Component
 public class SearchLrcHandler implements FileUnify<SearchVo> {
     public List<SearchVo> keyWord(SearchReq req) {
-        return handleInner(FileTypeEnum.LRC, file -> {
+        return handleFourth(FileTypeEnum.LRC, file -> {
             try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath())))) {
                 String str;
                 while ((str = bufferedReader.readLine()) != null) {
@@ -33,7 +33,7 @@ public class SearchLrcHandler implements FileUnify<SearchVo> {
                     }
                 }
             } catch (Exception e) {
-                log.error("读取lrc文件失败：{}", file.getAbsolutePath());
+                LOG.error("读取lrc文件失败：{}", file.getAbsolutePath());
                 throw new RuntimeException(e);
             }
             return null;

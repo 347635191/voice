@@ -11,5 +11,5 @@ public interface CategoryMapper {
 
     int insert(CategoryT categoryT);
 
-    int truncate();
+    void truncate();
 }

@@ -4,10 +4,10 @@ import com.googlecode.cqengine.IndexedCollection;
 import com.googlecode.cqengine.TransactionalIndexedCollection;
 import com.googlecode.cqengine.attribute.Attribute;
 import com.googlecode.cqengine.index.hash.HashIndex;
-import com.googlecode.cqengine.index.suffix.SuffixTreeIndex;
 import com.googlecode.cqengine.index.unique.UniqueIndex;
 import com.googlecode.cqengine.resultset.ResultSet;
 import com.yf.rj.common.FileConstants;
+import com.yf.rj.entity.CategoryT;
 import com.yf.rj.entity.Mp3T;
 import com.yf.rj.enums.Mp3IndexEnum;
 import com.yf.rj.enums.ResultType;
@@ -27,7 +27,7 @@ import static com.googlecode.cqengine.query.QueryFactory.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Mp3Db {
-    private static final Logger log = LoggerFactory.getLogger(Mp3Db.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Mp3Db.class);
     private static final IndexedCollection<Mp3T> CACHE;
 
     static {
@@ -36,13 +36,7 @@ public class Mp3Db {
         //添加索引
         CACHE.addIndex(UniqueIndex.onAttribute(Index.ID));
         CACHE.addIndex(HashIndex.onAttribute(Index.RJ));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.ARTIST));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.SERIES));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.COMPOSER));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.GENRE));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.COMMENT));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.RJ_NAME));
-        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.FILE_NAME));
+//        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.SERIES));
         //复合唯一索引
         CACHE.addIndex(UniqueIndex.onAttribute(Index.UNI_KEY));
     }
@@ -59,8 +53,6 @@ public class Mp3Db {
         public static final Attribute<Mp3T, String> COMMENT = nullableAttribute("COMMENT", Mp3T::getComment);
         public static final Attribute<Mp3T, String> RJ_NAME = attribute("RJ_NAME", Mp3T::getRjName);
         public static final Attribute<Mp3T, String> FILE_NAME = attribute("FILE_NAME", Mp3T::getFileName);
-        public static final Attribute<Mp3T, String> CREATE_TIME = attribute("CREATE_TIME", Mp3T::getCreateTime);
-        public static final Attribute<Mp3T, String> UPDATE_TIME = attribute("UPDATE_TIME", Mp3T::getUpdateTime);
     }
 
     public static void upset(List<Mp3T> mp3TList, boolean delete) {
@@ -88,6 +80,15 @@ public class Mp3Db {
         }
     }
 
+    /**
+     * 查询包含系列的音声
+     */
+    public static List<Mp3T> queryHasSeries() {
+        try (ResultSet<Mp3T> result = CACHE.retrieve(has(Index.SERIES))) {
+            return result.stream().collect(Collectors.toList());
+        }
+    }
+
     public static List<SearchVo> commonSearch(SearchReq searchReq) {
         Mp3IndexEnum indexEnum = Mp3IndexEnum.fromCode(searchReq.getCode());
         try (ResultSet<Mp3T> result = CACHE.retrieve(contains(indexEnum.getIndex(), searchReq.getKeyWord()))) {
@@ -110,12 +111,13 @@ public class Mp3Db {
     }
 
     private static String buildAbsoluteFile(Mp3T mp3T) {
-        String category = CategoryDb.queryUniById(mp3T.getCategoryId());
-        return FileConstants.ROOT_DIR + "\\" + category + "\\" + mp3T.getRjName() + "\\" + mp3T.getFileName();
+        CategoryT categoryT = CategoryDb.queryById(mp3T.getCategoryId());
+        return FileConstants.ROOT_DIR + "\\" + categoryT.getUniKey() + "\\" +
+                mp3T.getRjName() + "\\" + mp3T.getFileName();
     }
 
     public static void clear() {
-        log.info("清空音频缓存：{}", CACHE.size());
+        LOG.info("清空音频缓存：{}", CACHE.size());
         CACHE.clear();
     }
 }

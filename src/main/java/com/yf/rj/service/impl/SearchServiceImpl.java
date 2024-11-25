@@ -2,7 +2,7 @@ package com.yf.rj.service.impl;
 
 import com.yf.rj.cache.Mp3Db;
 import com.yf.rj.dto.BaseException;
-import com.yf.rj.enums.LrcIndexEnum;
+import com.yf.rj.enums.LrcSearchEnum;
 import com.yf.rj.handler.SearchLrcHandler;
 import com.yf.rj.req.SearchReq;
 import com.yf.rj.service.SearchService;
@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 public class SearchServiceImpl implements SearchService {
-    private static final Logger log = LoggerFactory.getLogger(SearchServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SearchServiceImpl.class);
 
     @Resource
     private SearchLrcHandler handler;
@@ -27,6 +27,6 @@ public class SearchServiceImpl implements SearchService {
         if (StringUtils.isNumeric(searchReq.getCode())) {
             return Mp3Db.commonSearch(searchReq);
         }
-        return LrcIndexEnum.fromCode(searchReq.getCode()).getSearch().apply(handler, searchReq);
+        return LrcSearchEnum.fromCode(searchReq.getCode()).getSearch().apply(handler, searchReq);
     }
 }

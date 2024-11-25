@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class ThreadPoolConfig {
-    private static final Logger log = LoggerFactory.getLogger(ThreadPoolConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ThreadPoolConfig.class);
 
     @Bean
     public ThreadPoolExecutor ioExecutor() {
         int count = Runtime.getRuntime().availableProcessors();
-        log.info("虚拟机可用处理器个数：{}", count);
+        LOG.info("虚拟机可用处理器个数：{}", count);
         return new ThreadPoolExecutor(count, 2 * count, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(3000),
                 new ThreadFactoryBuilder().setNameFormat("mp3-sync-full-%d").build(), new ThreadPoolExecutor.CallerRunsPolicy());
     }
