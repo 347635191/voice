@@ -23,4 +23,10 @@ public class UnifyReq {
      * 新值
      */
     private String newWord;
+
+    /**
+     * 替换类型
+     * 1-替换标题 2-替换字幕 3-替换标题和字幕
+     */
+    private Integer replaceType;
 }

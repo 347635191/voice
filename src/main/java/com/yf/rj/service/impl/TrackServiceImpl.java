@@ -1,9 +1,9 @@
 package com.yf.rj.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.JSONPath;
 import com.yf.rj.cache.Mp3Db;
 import com.yf.rj.common.FileConstants;
+import com.yf.rj.common.RjConstants;
+import com.yf.rj.config.DlSiteProperties;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.FileTypeEnum;
 import com.yf.rj.enums.TrackEnum;
@@ -11,7 +11,9 @@ import com.yf.rj.handler.TrackHandler;
 import com.yf.rj.req.TrackReq;
 import com.yf.rj.service.FileUnify;
 import com.yf.rj.service.TrackService;
+import com.yf.rj.util.ClipboardUtil;
 import com.yf.rj.util.FileUtil;
+import com.yf.rj.util.RegexUtil;
 import com.yf.rj.util.XmlUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,11 +41,13 @@ import java.util.Optional;
 @Service
 public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(TrackServiceImpl.class);
-    private static final String[] EXCLUDE_WORDS = new String[]{"乙女", "女性向"};
-    private static final String[] INCLUDE_WORDS = new String[]{"失禁", "放尿"};
+    private static final String[] EXCLUDE_WORDS = new String[]{"乙女", "女性向", "耽美"};
+    private static final String[] INCLUDE_WORDS = new String[]{"失禁", "放尿", "女同", "蕾丝"};
 
     @Resource
     private TrackHandler trackHandler;
+    @Resource
+    private DlSiteProperties dlSiteProperties;
 
     @Override
     public Object common(TrackReq trackReq) throws BaseException {
@@ -52,8 +56,42 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                 return checkSeries();
             case CHECK_DL_TREE:
                 return checkDlTree();
+            case DOWNLOAD_PIC:
+                return downloadPic();
         }
         return null;
+    }
+
+    /**
+     * 从DL SITE下载图片
+     */
+    private Object downloadPic() throws BaseException {
+        String baseUrl = ClipboardUtil.read();
+        if (!FileTypeEnum.WEBP.match(baseUrl)) {
+            throw new BaseException("输入的图片网址不正确：" + baseUrl);
+        }
+        int seq = 1;
+        int count = 0;
+        if (baseUrl.contains(dlSiteProperties.getImgMain())) {
+            String rj = RegexUtil.findLast("RJ\\d+", baseUrl);
+            String result = trackHandler.downloadPic(baseUrl, rj + FileTypeEnum.JPG.getSuffix());
+            if (StringUtils.isBlank(result)) {
+                return "下载封面失败";
+            }
+            count++;
+        } else if (baseUrl.contains(dlSiteProperties.getImgSmp())) {
+            seq = Integer.parseInt(RegexUtil.middle(baseUrl, dlSiteProperties.getImgSmp(), FileTypeEnum.WEBP.getSuffix()));
+        } else {
+            throw new BaseException("输入的图片网址不正确：" + baseUrl);
+        }
+        String prefix = RegexUtil.lastBefore(baseUrl, dlSiteProperties.getImg()) + dlSiteProperties.getImgSmp();
+        for (; ; seq++, count++) {
+            String result = trackHandler.downloadPic(prefix + seq + FileTypeEnum.JPG.getSuffix(), seq + FileTypeEnum.JPG.getSuffix());
+            if (StringUtils.isBlank(result)) {
+                break;
+            }
+        }
+        return "下载图片成功：" + count;
     }
 
     /**
@@ -78,6 +116,15 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                 }
                 //RJ
                 String rj = FileUtil.getRj(cell6);
+                if (RjConstants.SKIP_RJ.contains(rj)) {
+                    continue;
+                }
+                //MEGA链接
+                String megaUrl = XmlUtil.getCellVal(row.getCell(2));
+                if (!StringUtils.contains(megaUrl, "mega.nz")) {
+                    LOG.info("{}无mega档跳过，{}", rj, megaUrl);
+                    continue;
+                }
                 //是否已整理
                 if (StringUtil.isBlank(rj) || CollectionUtils.isNotEmpty(Mp3Db.queryByRj(rj))) {
                     continue;
@@ -86,19 +133,15 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                     continue;
                 }
                 //查询是否是全年龄
+                String searchInfo = trackHandler.search(rj);
+                if (StringUtils.containsAny(searchInfo, EXCLUDE_WORDS)) {
+                    LOG.info("{}触发关键字跳过：{}", rj, searchInfo);
+                    continue;
+                }
                 if (!StringUtils.containsAny(cell3, INCLUDE_WORDS)) {
-                    String workInfo = trackHandler.getWorkInfo(rj);
-                    if (StringUtils.containsAny(workInfo, EXCLUDE_WORDS)) {
+                    if (searchInfo.contains("\"age_category_string\":\"general\"")) {
+                        LOG.info("{}全年龄跳过", rj);
                         continue;
-                    }
-                    try {
-                        JSONObject jsonObject = JSONObject.parseObject(workInfo);
-                        String age = (String) JSONPath.eval(jsonObject, "$.age_category_string");
-                        if ("general".equals(age)) {
-                            System.out.println("generral");
-                            continue;
-                        }
-                    } catch (Exception ignore) {
                     }
                 }
                 //汉化音声的RJ

@@ -58,7 +58,7 @@ public class UnifyServiceImpl implements UnifyService, FileUnify<Integer> {
     private Integer replaceKeyWord(UnifyReq unifyReq) {
         List<Integer> modList = handleFourth(FileTypeEnum.LRC, lrcFile -> {
             try {
-                return FileUtil.replaceKeyWord(lrcFile, unifyReq.getOldWord(), unifyReq.getNewWord());
+                return FileUtil.replaceKeyWord(lrcFile, unifyReq.getOldWord(), unifyReq.getNewWord(), unifyReq.getReplaceType());
             } catch (BaseException e) {
                 throw new RuntimeException(e);
             }

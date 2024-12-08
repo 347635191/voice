@@ -6,27 +6,31 @@ import com.yf.rj.common.SymbolConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.DailyEnum;
 import com.yf.rj.enums.FileTypeEnum;
+import com.yf.rj.enums.ReplaceTypeEnum;
 import com.yf.rj.req.DailyReq;
 import com.yf.rj.service.DailyService;
 import com.yf.rj.util.ClipboardUtil;
 import com.yf.rj.util.FileUtil;
 import com.yf.rj.util.RegexUtil;
 import com.yf.rj.util.WordUtil;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
 public class DailyServiceImpl implements DailyService {
+    private static final Logger LOG = LoggerFactory.getLogger(DailyServiceImpl.class);
+
     @Override
     public String common(DailyReq dailyReq) throws BaseException {
         switch (DailyEnum.fromCode(dailyReq.getCode())) {
@@ -47,8 +51,143 @@ public class DailyServiceImpl implements DailyService {
                 return replaceKeyWord(dailyReq);
             case DISCARD_SYMBOL:
                 return discardSymbol();
+            case BATCH_PIC_NAME:
+                return batchPicName(dailyReq);
+            case ADD_PREFIX:
+                return addPrefix(dailyReq);
+            case SEQ_OFFSET:
+                return seqOffset(dailyReq);
+            case REPLACE_TITLE:
+                return replaceTitle(dailyReq);
         }
         return null;
+    }
+
+    /**
+     * 替换标题关键字
+     */
+    private String replaceTitle(DailyReq dailyReq) throws BaseException {
+        File[] files = FileUtil.preCheck(ClipboardUtil.read());
+        String oldWord = dailyReq.getOldWord();
+        String newWord = dailyReq.getNewWord();
+        int count = 0;
+        for (File file : files) {
+            if (FileTypeEnum.LRC.match(file) || FileTypeEnum.MP3.match(file)) {
+                if (StringUtils.isBlank(oldWord)) {
+                    throw new BaseException("必须输入旧值");
+                }
+                String name = file.getName();
+                String newFileName = name.replaceAll(oldWord, newWord);
+                if (name.equals(newFileName)) {
+                    continue;
+                }
+                String newFilePath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
+                boolean changed = file.renameTo(new File(newFilePath));
+                if (!changed) {
+                    LOG.warn("{}修改文件名失败", file.getAbsolutePath());
+                    continue;
+                }
+                count++;
+            }
+        }
+        return "替换标题关键字：" + count;
+    }
+
+    /**
+     * 序号偏移量
+     */
+    private String seqOffset(DailyReq dailyReq) throws BaseException {
+        File[] files = FileUtil.preCheck(ClipboardUtil.read());
+        Integer start = dailyReq.getStart();
+        Integer end = dailyReq.getEnd();
+        Integer offset = dailyReq.getSkip();
+        if (ObjectUtils.anyNull(start, end, offset)) {
+            throw new BaseException("开始和结束序号和偏移量必输");
+        }
+        if (end < start) {
+            throw new BaseException("结束序号不能小于开始序号");
+        }
+        Arrays.stream(files).filter(file -> FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.LRC.getSuffix(), FileTypeEnum.MP3.getSuffix()))
+                .forEach(file -> {
+                    Integer seq = FileUtil.getSeq(file);
+                    if (seq < start || seq > end) {
+                        return;
+                    }
+                    seq += offset;
+                    String newFileName = seq + "." +  file.getName().split("\\.", 2)[1];
+                    String newPath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
+                    boolean isRenamed = file.renameTo(new File(newPath));
+                    if (!isRenamed) {
+                        LOG.warn("{}序号偏移量修改失败", file.getAbsolutePath());
+                    }
+                });
+        return "序号偏移量修改成功";
+    }
+    /**
+     * 统一添加前缀
+     */
+    private String addPrefix(DailyReq dailyReq) throws BaseException {
+        File[] files = FileUtil.preCheck(ClipboardUtil.read());
+        Integer start = dailyReq.getStart();
+        Integer end = dailyReq.getEnd();
+        String prefix = dailyReq.getNewWord();
+        if (ObjectUtils.anyNull(start, end)) {
+            throw new BaseException("开始和结束序号必输");
+        }
+        if (end < start) {
+            throw new BaseException("结束序号不能小于开始序号");
+        }
+        Arrays.stream(files).filter(file -> FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.LRC.getSuffix(), FileTypeEnum.MP3.getSuffix()))
+                .forEach(file -> {
+                    Integer seq = FileUtil.getSeq(file);
+                    if (seq < start || seq > end) {
+                        return;
+                    }
+                    if (file.getName().contains(prefix)) {
+                        return;
+                    }
+                    if (RegexUtil.invalidFileName(file.getName())) {
+                        LOG.info("{}标题不合法", file.getName());
+                        return;
+                    }
+                    String word = RegexUtil.findFirst("(?<=\\d+\\.).*$", file.getName().replace(LrcConstants.H_LABEL, ""));
+                    List<String> noSpace = Collections.singletonList("【H】");
+                    String delimiter =  noSpace.contains(prefix) ? StringUtils.EMPTY : StringUtils.SPACE;
+                    String newFileName = file.getName().replace(word, prefix + delimiter + word);
+                    String newPath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
+                    boolean isRenamed = file.renameTo(new File(newPath));
+                    if (!isRenamed) {
+                        LOG.warn("{}修改文件名失败", file.getAbsolutePath());
+                    }
+                });
+        return "统一添加前缀成功";
+    }
+
+    /**
+     * 批量处理图片名称
+     */
+    private String batchPicName(DailyReq dailyReq) throws BaseException {
+        File[] files = FileUtil.preCheck(ClipboardUtil.read());
+        Integer skip = dailyReq.getSkip();
+        if (skip == null) {
+            throw new BaseException("skip必输");
+        }
+        AtomicInteger seqGen = new AtomicInteger(skip);
+        Arrays.stream(files).filter(file -> FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.PNG.getSuffix(), FileTypeEnum.JPG.getSuffix()))
+                .sorted(Comparator.comparing(File::getName))
+                .forEach(file -> {
+                    int seq = seqGen.getAndIncrement();
+                    String seqStr = seq == 0 ? StringUtils.EMPTY : String.valueOf(seq);
+                    String[] split = file.getName().split("\\.");
+                    String newFileName = FileConstants.PIC_PREFIX + seqStr + "." + split[1];
+                    try {
+                        Files.copy(file.toPath(), Paths.get(RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName));
+                    } catch (IOException e) {
+                        LOG.warn("{}批量处理图片名称失败", file.getAbsolutePath());
+                        throw new RuntimeException(e);
+                    }
+                });
+        return "批量处理图片名称成功";
     }
 
     /**
@@ -74,12 +213,11 @@ public class DailyServiceImpl implements DailyService {
         int count = 0;
         for (File file : files) {
             if (FileTypeEnum.LRC.match(file)) {
-                count += FileUtil.replaceKeyWord(file, dailyReq.getOldWord(), dailyReq.getNewWord());
+                count += FileUtil.replaceKeyWord(file, dailyReq.getOldWord(), dailyReq.getNewWord(), dailyReq.getReplaceType());
             }
         }
         return "替换关键字成功：" + count;
     }
-
 
     /**
      * 获取声优
@@ -97,7 +235,6 @@ public class DailyServiceImpl implements DailyService {
         ClipboardUtil.write(artist);
         return "获取声优成功";
     }
-
 
     /**
      * 获取标签
@@ -125,7 +262,7 @@ public class DailyServiceImpl implements DailyService {
     private String traToSim() throws BaseException {
         File[] files = FileUtil.preCheck(FileConstants.DESKTOP_DIR);
         for (File file : files) {
-            if (FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.LRC.getSuffix())) {
+            if (FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.LRC.getSuffix(), FileTypeEnum.VTT.getSuffix())) {
                 StringBuilder result = new StringBuilder();
                 try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath())))) {
                     String str;
@@ -137,8 +274,14 @@ public class DailyServiceImpl implements DailyService {
                     throw new BaseException("读取文件失败：" + file.getName());
                 }
                 FileUtil.delete(file);
+                String newFileName;
+                if (FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.LRC.getSuffix())) {
+                    newFileName = WordUtil.simplify(FileUtil.simplifyName(file, FileTypeEnum.LRC));
+                } else {
+                    newFileName = WordUtil.simplify(file.getName());
+                }
                 try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(
-                        Paths.get(FileConstants.DESKTOP_DIR + "\\" + WordUtil.simplify(FileUtil.simplifyName(file, FileTypeEnum.LRC))))))) {
+                        Paths.get(FileConstants.DESKTOP_DIR + "\\" + newFileName))))) {
                     bufferedWriter.write(result.substring(0, result.length() - 1));
                     bufferedWriter.flush();
                 } catch (IOException e) {
@@ -324,13 +467,13 @@ public class DailyServiceImpl implements DailyService {
                 } catch (IOException e) {
                     throw new BaseException("读取文件失败：" + file.getName());
                 }
-//              FileUtil.delete(file);
+                FileUtil.delete(file);
                 String newFileName = FileUtil.simplifyName(file, FileTypeEnum.LRC);
                 if (needSimplify) {
                     newFileName = WordUtil.simplify(newFileName);
                 }
                 try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(
-                        Paths.get(FileConstants.DESKTOP_OUT_DIR + "\\" + newFileName))))) {
+                        Paths.get(FileConstants.DESKTOP_DIR + "\\" + newFileName))))) {
                     bufferedWriter.write(result.substring(0, result.length() - 1));
                     bufferedWriter.flush();
                 } catch (IOException e) {
@@ -338,7 +481,7 @@ public class DailyServiceImpl implements DailyService {
                 }
             }
         }
-        return "繁体转简体成功";
+        return "格式化LRC成功";
     }
 
     private boolean checkNeedSimplify(DailyReq dailyReq) throws BaseException {

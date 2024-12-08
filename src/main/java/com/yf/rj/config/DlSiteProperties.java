@@ -4,13 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 @RefreshScope
-@ConfigurationProperties(prefix = "asmrone")
+@ConfigurationProperties(prefix = "dlsite")
 @Getter
 @Setter
-public class AsmrOneConfig {
-    public String wordInfoUrl;
+public class DlSiteProperties {
+    private String htmlUrl;
+    private String imgMain;
+    private String imgSmp;
+    private String img;
 }

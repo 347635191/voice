@@ -11,7 +11,7 @@ public class DailyReq {
      * DailyEnum.code
      */
     @NotBlank
-    @Pattern(regexp = "[012345678]")
+    @Pattern(regexp = "[0123456789]+")
     private String code;
 
     /**
@@ -25,6 +25,12 @@ public class DailyReq {
     private Boolean needSimplify;
 
     /**
+     * 替换类型
+     * 1-替换标题 2-替换字幕 3-替换标题和字幕
+     */
+    private Integer replaceType;
+
+    /**
      * 旧值
      */
     private String oldWord;
@@ -33,4 +39,14 @@ public class DailyReq {
      * 新值
      */
     private String newWord;
+
+    /**
+     * 开始序号
+     */
+    private Integer start;
+
+    /**
+     * 结束序号
+     */
+    private Integer end;
 }

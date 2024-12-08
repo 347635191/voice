@@ -4,6 +4,7 @@ import com.yf.rj.common.FileConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.entity.Mp3T;
 import com.yf.rj.enums.FileTypeEnum;
+import com.yf.rj.enums.ReplaceTypeEnum;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -134,7 +135,7 @@ public class FileUtil {
     }
 
     public static String getOneCategory(File file) {
-        String regex = "(?<=" + FileConstants.THIRD_DIR_NAME + "\\\\).*?(?=\\\\)";
+        String regex = "(?<=" + FileConstants.FIRST_DIR_NAME + "\\\\).*?(?=\\\\)";
         return RegexUtil.findFirst(regex, file.getAbsolutePath());
     }
 
@@ -226,47 +227,66 @@ public class FileUtil {
     /**
      * lrc替换关键字
      */
-    public static int replaceKeyWord(File file, String oldWord, String newWord) throws BaseException {
+    public static int replaceKeyWord(File file, String oldWord, String newWord, Integer replaceType) throws BaseException {
         if (StringUtils.isBlank(oldWord)) {
             throw new BaseException("必须输入旧值");
         }
+        ReplaceTypeEnum replaceEnum = ReplaceTypeEnum.fromCode(replaceType);
+        if (replaceEnum == null) {
+            throw new BaseException("输入的替换类型不合法");
+        }
         boolean needChange = false;
         String newFileName = FileUtil.simplifyName(file, FileTypeEnum.LRC);
-        newFileName = newFileName.replaceAll(oldWord, newWord);
+        if (replaceEnum == ReplaceTypeEnum.TITLE || replaceEnum == ReplaceTypeEnum.ALL) {
+            newFileName = newFileName.replaceAll(oldWord, newWord);
+        }
         if (!file.getName().equals(newFileName)) {
+            System.out.println(file.getName());
+            System.out.println(newFileName);
             needChange = true;
         }
         StringBuilder result = new StringBuilder();
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath())))) {
-            String str;
-            while ((str = bufferedReader.readLine()) != null) {
-                String newLine = str.replaceAll(oldWord, newWord);
-                if (!str.equals(newLine)) {
-                    needChange = true;
+        if (replaceEnum == ReplaceTypeEnum.CONTENT || replaceEnum == ReplaceTypeEnum.ALL) {
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath())))) {
+                String str;
+                while ((str = bufferedReader.readLine()) != null) {
+                    String newLine = str.replaceAll(oldWord, newWord);
+                    if (!str.equals(newLine)) {
+                        System.out.println(str);
+                        System.out.println(newLine);
+                        needChange = true;
+                    }
+                    result.append(newLine).append('\n');
                 }
-                result.append(newLine).append('\n');
+            } catch (IOException e) {
+                throw new BaseException("读取文件失败：" + file.getName());
             }
-        } catch (IOException e) {
-            throw new BaseException("读取文件失败：" + file.getName());
         }
         if (needChange) {
-            if (!file.delete()) {
-                throw new BaseException("删除文件失败：" + file.getName());
-            }
-            String newLrcName = RegexUtil.lastBefore(file.getAbsolutePath(), "\\\\") + newFileName;
-            try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(
-                    Paths.get(newLrcName))))) {
-                bufferedWriter.write(result.substring(0, result.length() - 1));
-                bufferedWriter.flush();
-            } catch (IOException e) {
-                throw new BaseException("创建文件失败：" + file.getName());
+            String newLrcName = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
+            if (replaceEnum == ReplaceTypeEnum.TITLE) {
+                boolean changed = file.renameTo(new File(newLrcName));
+                if (!changed) {
+                    LOG.warn("{}修改文件名失败", file.getAbsolutePath());
+                }
+            } else {
+                if (!file.delete()) {
+                    throw new BaseException("删除文件失败：" + file.getName());
+                }
+                try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(
+                        Paths.get(newLrcName))))) {
+                    bufferedWriter.write(result.substring(0, result.length() - 1));
+                    bufferedWriter.flush();
+                } catch (IOException e) {
+                    throw new BaseException("创建文件失败：" + file.getName());
+                }
             }
             //lrc文件名变动，mp3文件名也跟着变
             if (!file.getName().equals(newFileName)) {
                 File mp3File = new File(file.getAbsolutePath().replaceAll(FileTypeEnum.LRC.getSuffix(), FileTypeEnum.MP3.getSuffix()));
                 boolean changed = mp3File.renameTo(new File(newLrcName.replaceAll(FileTypeEnum.LRC.getSuffix(), FileTypeEnum.MP3.getSuffix())));
                 if (!changed) {
-                    LOG.warn(file.getAbsolutePath() + "没有联动修改对应的音频文件");
+                    LOG.warn("{}联动修改对应的音频文件失败", file.getAbsolutePath());
                 }
             }
         }
@@ -287,9 +307,19 @@ public class FileUtil {
                     //去除特殊符号
                     String newLine = formatOddLine(str);
                     if (!str.equals(newLine)) {
+                        System.out.println(str);
+                        System.out.println(newLine);
                         needChange = true;
                     }
-                    result.append(newLine).append('\n');
+                    String[] oddLineArr = newLine.split("]", 2);
+                    if (StringUtils.isBlank(oddLineArr[1])) {
+                        LOG.info("{}出现空字幕：{}", file.getAbsolutePath(), newLine);
+                        bufferedReader.readLine();
+                        needChange = true;
+                        oddLine = false;
+                    } else {
+                        result.append(newLine).append('\n');
+                    }
                 } else {
                     RegexUtil.checkLrcSpaceLine(str, file.getName());
                     result.append(str).append('\n');
@@ -320,7 +350,7 @@ public class FileUtil {
         String[] split = str.split("]", 2);
         String time = split[0] + "]";
         String word = split[1].trim();
-        word = word.replaceAll("[\ufe0f　.。…,，·~、—－～〜♡❤♥❥♪!！?？⁉\\-☆・\\s]+", StringUtils.SPACE);
+        word = word.replaceAll("[\ufe0f　.。…,，·~、—－～〜♡❤♥❥♪!！?？⁉☆・\\s]+", StringUtils.SPACE);
         word = word.replaceAll("\\s+", StringUtils.SPACE);
         word = word.replaceAll("\\s+(?=[)）\\]】」』])", StringUtils.EMPTY);
         word = word.replaceAll("(?<=[(（\\[【「『])\\s+", StringUtils.EMPTY);

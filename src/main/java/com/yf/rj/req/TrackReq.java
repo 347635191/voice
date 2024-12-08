@@ -11,6 +11,6 @@ public class TrackReq {
      * TrackEnum.code
      */
     @NotBlank
-    @Pattern(regexp = "[0123]")
+    @Pattern(regexp = "[012]")
     private String code;
 }

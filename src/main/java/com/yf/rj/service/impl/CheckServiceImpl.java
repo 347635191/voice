@@ -118,8 +118,10 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
      */
     private List<String> checkMp3() {
         List<List<String>> resultList = handleThird(FileTypeEnum.DIR, dir -> {
-            //检查优化为图片文件夹
             List<String> result = new ArrayList<>();
+            if (RegexUtil.invalidDirName(dir.getName())) {
+                result.add("文件夹名称非法：" + dir.getName());
+            }
             Map<Boolean, List<String>> collect = Optional.ofNullable(dir.listFiles())
                     .map(Arrays::asList)
                     .orElse(new ArrayList<>())
@@ -131,7 +133,7 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
             List<String> lrcNameList = collect.get(Boolean.FALSE);
             String rj = FileUtil.getRj(dir);
             //检查mp3名称
-            String invalidMp3 = mp3NameList.stream().filter(RegexUtil::invalidName).collect(Collectors.joining(", "));
+            String invalidMp3 = mp3NameList.stream().filter(RegexUtil::invalidFileName).collect(Collectors.joining(", "));
             if (StringUtils.isNotBlank(invalidMp3)) {
                 result.add(rj + "的音频名称非法：" + invalidMp3);
             }
@@ -263,7 +265,7 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
         LOG.info("查询到系列文件夹的音频：{}", seriesMp3List.size());
         List<String> seriesList = seriesMp3List.stream().map(Mp3T::getSeries).distinct().collect(Collectors.toList());
         List<Mp3T> classifyMp3List = collect.get(Boolean.FALSE);
-        LOG.info("查询到分类文件夹的音频：{}", classifyMp3List.size());
+        LOG.info("查询到分类文件夹含系列的音频：{}", classifyMp3List.size());
         classifyMp3List.stream().filter(mp3T -> seriesList.contains(mp3T.getSeries()))
                 .forEach(mp3T -> result.add(mp3T.getRj() + "请移动至已存在的系列文件夹"));
         //二级分类
@@ -295,12 +297,9 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
         rjMap.forEach((key, value) -> {
             Map<String, String> map = new HashMap<>();
             value.forEach(mp3T -> {
-                //标题
-                checkEle(mp3T.getTitle(), result, Mp3AttrConstants.TITLE, mp3T, map);
+                //标题和唱片集不用检查，后续执行统一设置标题和唱片集
                 //声优
                 checkEle(mp3T.getArtist(), result, Mp3AttrConstants.ARTIST, mp3T, map);
-                //唱片集
-                checkEle(mp3T.getAlbum(), result, Mp3AttrConstants.ALBUM, mp3T, map);
                 //年份
                 checkEle(mp3T.getYear(), result, Mp3AttrConstants.YEAR, mp3T, map);
                 //标签
@@ -378,10 +377,6 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
 
     private static void checkEle(String ele, Set<String> result, String colName, Mp3T mp3T, Map<String, String> map) {
         switch (colName) {
-            case Mp3AttrConstants.TITLE:
-                checkBlank(ele, result, colName, mp3T);
-                checkSpace(ele, result, colName, mp3T);
-                break;
             case Mp3AttrConstants.ARTIST:
                 checkBlank(ele, result, colName, mp3T);
                 checkSpace(ele, result, colName, mp3T);
@@ -390,7 +385,6 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
                 }
                 checkSame(map, colName, ele, result, mp3T.getRj());
                 break;
-            case Mp3AttrConstants.ALBUM:
             case Mp3AttrConstants.YEAR:
             case Mp3AttrConstants.COMMENT:
             case Mp3AttrConstants.COMPOSER:

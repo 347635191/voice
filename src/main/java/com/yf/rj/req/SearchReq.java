@@ -13,7 +13,7 @@ public class SearchReq {
      * LrcSearchEnum.code
      */
     @NotBlank
-    @Pattern(regexp = "[0123456a]")
+    @Pattern(regexp = "[0123456aABC]")
     private String code;
     /**
      * 关键字

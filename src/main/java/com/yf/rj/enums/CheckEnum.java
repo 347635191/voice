@@ -18,8 +18,8 @@ public enum CheckEnum {
     PICTURE("2"),//检查图片
     RJ("3"),//检查重复RJ和封面对应
     MP3("4"),//检查mp3
-    DIR("5"),//检查文件夹
-    LRC("6"),//检查lrc
+    DIR("5"),//检查优化为图片文件夹
+    LRC("6"),//检查单字幕
     ;
 
     private String code;

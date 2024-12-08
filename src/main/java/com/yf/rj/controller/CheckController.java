@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
+/**
+ * 统一检查
+ */
 @RestController
 @RequestMapping("/check")
 public class CheckController {

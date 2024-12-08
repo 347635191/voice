@@ -7,6 +7,13 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * 〇
+ * Ci-en特典
+ * 早期特典
+ * 特典
+ * EX
+ * Live2D
+ * 追加音轨
+ * SP
  */
 //@MapperScan(basePackages = {"com.yf.rj.mapper"})
 @SpringBootApplication

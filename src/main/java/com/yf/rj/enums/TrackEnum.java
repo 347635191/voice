@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public enum TrackEnum {
     CHECK_SERIES("0"),//检查系列实时性
     CHECK_DL_TREE("1"),//检查DL tree.xlsx里未整理的
+    DOWNLOAD_PIC("2"),//从DL SITE下载图片
     ;
 
     private String code;

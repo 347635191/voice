@@ -22,6 +22,10 @@ public enum DailyEnum {
     GET_ARTIST("6"),//获取艺术家
     REPLACE_KEYWORD("7"),//替换关键字
     DISCARD_SYMBOL("8"),//去符号
+    BATCH_PIC_NAME("9"),//批量处理图片名称
+    ADD_PREFIX("10"),//统一添加前缀
+    SEQ_OFFSET("11"),//序号偏移量
+    REPLACE_TITLE("12"),//替换标题关键字
     ;
 
     private String code;

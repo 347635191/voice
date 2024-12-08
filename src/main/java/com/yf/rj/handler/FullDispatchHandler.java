@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 public class FullDispatchHandler implements FileUnify<Object> {
     private static final Logger LOG = LoggerFactory.getLogger(FullDispatchHandler.class);
     private ArrayBlockingQueue<Mp3T> mp3SyncQueue;
+    private static final AtomicInteger TOTAL = new AtomicInteger();
 
     @Value("${fullDispatch.totalQueueSize}")
     private int totalQueueSize;
@@ -40,10 +42,8 @@ public class FullDispatchHandler implements FileUnify<Object> {
 
     @Resource
     private Mp3Mapper mp3Mapper;
-
     @Resource
     private CategoryMapper categoryMapper;
-
     @Resource
     private ThreadPoolExecutor ioExecutor;
 
@@ -105,7 +105,9 @@ public class FullDispatchHandler implements FileUnify<Object> {
             try {
                 mp3Mapper.batchInsert(collect);
                 Mp3Db.upset(collect, false);
-                LOG.info("全量mp3分批入库成功，总条数：{}", collect.size());
+                int batchSize = collect.size();
+                int totalSize = TOTAL.addAndGet(collect.size());
+                LOG.info("全量mp3分批入库成功，本次条数：{}，总条数：{}", batchSize, totalSize);
             } catch (Exception e) {
                 LOG.error("全量mp3分批入库失败", e);
             }
@@ -150,5 +152,6 @@ public class FullDispatchHandler implements FileUnify<Object> {
         LOG.info("清空分类表");
         mp3Mapper.truncate();
         LOG.info("清空音频表");
+        TOTAL.set(0);
     }
 }

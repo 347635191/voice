@@ -91,6 +91,13 @@ public class Mp3Db {
 
     public static List<SearchVo> commonSearch(SearchReq searchReq) {
         Mp3IndexEnum indexEnum = Mp3IndexEnum.fromCode(searchReq.getCode());
+        //系列不用模糊匹配
+        if (indexEnum == Mp3IndexEnum.SERIES) {
+            try (ResultSet<Mp3T> result = CACHE.retrieve(equal(indexEnum.getIndex(), searchReq.getKeyWord()))) {
+                return result.stream().map(mp3T -> buildSearchVo(mp3T, indexEnum, searchReq))
+                        .distinct().collect(Collectors.toList());
+            }
+        }
         try (ResultSet<Mp3T> result = CACHE.retrieve(contains(indexEnum.getIndex(), searchReq.getKeyWord()))) {
             return result.stream().map(mp3T -> buildSearchVo(mp3T, indexEnum, searchReq))
                     .distinct().collect(Collectors.toList());

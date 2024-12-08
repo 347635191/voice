@@ -1,8 +1,8 @@
 package com.yf.rj.common;
 
 public interface FileConstants {
-    String THIRD_DIR_NAME = "日语";
-    String ROOT_DIR = "E:\\AAA\\sound\\" + THIRD_DIR_NAME;
+    String FIRST_DIR_NAME = "sound";
+    String ROOT_DIR = "F:\\" + FIRST_DIR_NAME;
     String CLASSIFY = "分类";
     String CLASSIFY_DIR = ROOT_DIR + "\\" + CLASSIFY;
     String SERIES = "系列";

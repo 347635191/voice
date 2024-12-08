@@ -29,7 +29,9 @@ public enum FileTypeEnum {
     WAV(6, ".*\\.wav$", ".wav"),
     FLAC(7, ".*\\.flac$", ".flac"),
     JPG(8, ".*\\.jpg$", ".jpg"),
-    INI(9, ".*\\.ini$", ".ini");
+    PNG(9, ".*\\.png$", ".png"),
+    WEBP(10, ".*\\.webp$", ".webp"),
+    INI(11, ".*\\.ini$", ".ini");
 
     private Integer code;
     private String regex;
