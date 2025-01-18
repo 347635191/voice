@@ -112,7 +112,7 @@ public class FileUtil {
                 mp3T.setComposer(composer);
             }
         } catch (Exception e) {
-            LOG.error("获取属性失败，文件名：{}", file.getName());
+            LOG.error("获取属性失败，{}|文件名：{}", getRj(file), file.getName());
         }
     }
 

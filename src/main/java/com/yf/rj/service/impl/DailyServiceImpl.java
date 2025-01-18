@@ -6,7 +6,6 @@ import com.yf.rj.common.SymbolConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.DailyEnum;
 import com.yf.rj.enums.FileTypeEnum;
-import com.yf.rj.enums.ReplaceTypeEnum;
 import com.yf.rj.req.DailyReq;
 import com.yf.rj.service.DailyService;
 import com.yf.rj.util.ClipboardUtil;
@@ -114,7 +113,7 @@ public class DailyServiceImpl implements DailyService {
                         return;
                     }
                     seq += offset;
-                    String newFileName = seq + "." +  file.getName().split("\\.", 2)[1];
+                    String newFileName = seq + "." + file.getName().split("\\.", 2)[1];
                     String newPath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
                     boolean isRenamed = file.renameTo(new File(newPath));
                     if (!isRenamed) {
@@ -123,6 +122,7 @@ public class DailyServiceImpl implements DailyService {
                 });
         return "序号偏移量修改成功";
     }
+
     /**
      * 统一添加前缀
      */
@@ -146,13 +146,14 @@ public class DailyServiceImpl implements DailyService {
                     if (file.getName().contains(prefix)) {
                         return;
                     }
-                    if (RegexUtil.invalidFileName(file.getName())) {
+                    if (FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.MP3.getSuffix())
+                            && RegexUtil.invalidFileName(file.getName())) {
                         LOG.info("{}标题不合法", file.getName());
                         return;
                     }
                     String word = RegexUtil.findFirst("(?<=\\d+\\.).*$", file.getName().replace(LrcConstants.H_LABEL, ""));
                     List<String> noSpace = Collections.singletonList("【H】");
-                    String delimiter =  noSpace.contains(prefix) ? StringUtils.EMPTY : StringUtils.SPACE;
+                    String delimiter = noSpace.contains(prefix) ? StringUtils.EMPTY : StringUtils.SPACE;
                     String newFileName = file.getName().replace(word, prefix + delimiter + word);
                     String newPath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
                     boolean isRenamed = file.renameTo(new File(newPath));

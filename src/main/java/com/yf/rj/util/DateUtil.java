@@ -24,4 +24,14 @@ public class DateUtil {
     public static String getDateTimeNow() {
         return LocalDateTime.now().format(FULL_DATE_TIME_FORMATTER);
     }
+
+    /**
+     * 毫秒转分钟
+     */
+    public static String convert(Long milliSeconds) {
+        long seconds = milliSeconds / 1000;
+        long minutes = seconds / 60;
+        long remainingSeconds = seconds % 60;
+        return String.format("%d分%d秒", minutes, remainingSeconds);
+    }
 }

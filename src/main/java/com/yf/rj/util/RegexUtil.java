@@ -16,9 +16,9 @@ public class RegexUtil {
     private static final String LRC_SPACE_LINE_REGEX = "\\[\\d{2,3}:\\d{2}.\\d{2}] ";
     private static final String[] H_WORDS = new String[]{"对面座位", "后背位", "骑乘位", "正常位", "背面座位",
             "对面立位", "背面立位", "对面侧位", "背面侧位", "屈曲位", "駅弁"};
-    private static final String[] ERROR_WORDS = new String[]{"鸡巴", "清扫", "  ", "内射", "wav", "mp3.mp3", ". ", " .", "手枪","序幕","赠品","学长","中粗","正常体位","骑乘体位","欧派","贴身"};
+    private static final String[] ERROR_WORDS = new String[]{"鸡巴", "清扫", "  ", "内射", "wav", "mp3.mp3", ". ", " .", "手枪","序幕","赠品","学长","中粗","正常体位","骑乘体位","欧派","贴身","盖饭"};
     private static final String[] EXCLUDE_WORDS = new String[]{"紧贴身体","口内射精", "腔内射精"};
-    private static final String MP3_NAME_REGEX = "\\d{1,3}.(【H】)?[\\u4e00-\\u9fa5\\d A-Z&→%？a-z○αβ=\\-+〇⇒~×.]+.mp3";
+    private static final String MP3_NAME_REGEX = "\\d{1,3}.(【H】)?[\\u4e00-\\u9fa5\\d A-Z&→%？a-z○αβ=≠\\-+〇≤⇒~×.]+.mp3";
     private static final String RJ_NAME_REGEX = "RJ\\d+ [\\u4e00-\\u9fa5 A-Za-z&×\\d→〇⇒+%x.]+";
     private static final String DL_SITE_SERIES_REGEX = "(?<=<span itemprop=\"name\">「).*?(?=」シリーズ)";
 

@@ -1,8 +1,8 @@
 package com.yf.rj.service.impl;
 
-import com.yf.rj.dto.BaseException;
 import com.yf.rj.handler.FullDispatchHandler;
 import com.yf.rj.service.SyncService;
+import com.yf.rj.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,10 +18,11 @@ public class SyncServiceImpl implements SyncService {
 
     @Override
 //    @Transactional(rollbackFor = Exception.class)
-    public void syncFull() throws BaseException {
+    public void syncFull() {
         long start = System.currentTimeMillis();
         fullDispatchHandler.clearData();
         fullDispatchHandler.commonHandle();
-        LOG.info("全量同步耗时：{}毫秒", System.currentTimeMillis() - start);
+        fullDispatchHandler.waitSyncFinished();
+        LOG.info("全量同步耗时：{}", DateUtil.convert(System.currentTimeMillis() - start));
     }
 }
