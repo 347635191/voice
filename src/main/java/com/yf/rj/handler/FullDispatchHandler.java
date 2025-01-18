@@ -10,7 +10,6 @@ import com.yf.rj.mapper.Mp3Mapper;
 import com.yf.rj.service.FileUnify;
 import com.yf.rj.util.DateUtil;
 import com.yf.rj.util.FileUtil;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +33,7 @@ public class FullDispatchHandler implements FileUnify<Object> {
     private static final Logger LOG = LoggerFactory.getLogger(FullDispatchHandler.class);
     private ArrayBlockingQueue<Mp3T> mp3SyncQueue;
     private static final AtomicInteger TOTAL = new AtomicInteger();
+    private static final List<CompletableFuture<Void>> futureList = new ArrayList<>();
 
     @Value("${fullDispatch.totalQueueSize}")
     private int totalQueueSize;
@@ -46,6 +47,8 @@ public class FullDispatchHandler implements FileUnify<Object> {
     private CategoryMapper categoryMapper;
     @Resource
     private ThreadPoolExecutor ioExecutor;
+    @Resource
+    private ScheduledThreadPoolExecutor scheduledExecutor;
 
     @PostConstruct
     public void init() {
@@ -54,10 +57,7 @@ public class FullDispatchHandler implements FileUnify<Object> {
             return;
         }
         mp3SyncQueue = new ArrayBlockingQueue<>(totalQueueSize);
-        ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1,
-                new BasicThreadFactory.Builder().namingPattern("mp3-sync-full-%d").build(),
-                new ThreadPoolExecutor.CallerRunsPolicy());
-        executorService.scheduleAtFixedRate(new Mp3DispatchWork(), 0, 5, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(new Mp3DispatchWork(), 0, 5, TimeUnit.SECONDS);
         LOG.info("全量mp3同步分发队列已开启，totalQueueSize：{}", totalQueueSize);
     }
 
@@ -78,7 +78,7 @@ public class FullDispatchHandler implements FileUnify<Object> {
     @Override
     public void handleFourth(File file) {
         if (FileTypeEnum.MP3.match(file)) {
-            CompletableFuture.runAsync(() -> {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     Mp3T mp3T = buildMp3T(file);
                     mp3SyncQueue.put(mp3T);
@@ -89,6 +89,7 @@ public class FullDispatchHandler implements FileUnify<Object> {
                 LOG.info("ioExecutor failed：{}", file.getAbsolutePath(), e);
                 return null;
             });
+            futureList.add(future);
         }
     }
 
@@ -153,5 +154,15 @@ public class FullDispatchHandler implements FileUnify<Object> {
         mp3Mapper.truncate();
         LOG.info("清空音频表");
         TOTAL.set(0);
+        futureList.clear();
+    }
+
+    /**
+     * 主线程等待异步落库完成
+     */
+    public void waitSyncFinished() {
+        LOG.info("单次批量入库的异步任务数：{}", futureList.size());
+        CompletableFuture<Void> finalFuture = CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]));
+        finalFuture.join();
     }
 }
