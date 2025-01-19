@@ -2,6 +2,7 @@ package com.yf.rj.config;
 
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.vo.Result;
+import org.apache.catalina.connector.ClientAbortException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,14 @@ public class SpringControllerAdvice {
     @ExceptionHandler(RuntimeException.class)
     @ResponseBody
     public Result runtimeExceptionHandler(RuntimeException e) {
-        LOG.error("运行时异常：{}", String.valueOf(e));
+        LOG.error("运行时异常", e);
+        return Result.fail(e.getMessage());
+    }
+
+    @ExceptionHandler(ClientAbortException.class)
+    @ResponseBody
+    public Result clientAbortExceptionHandler(ClientAbortException e) {
+        LOG.error("连接中断", e);
         return Result.fail(e.getMessage());
     }
 }

@@ -1,6 +1,9 @@
 server:
   port: 9006
   shutdown: graceful
+  #调大超时时间解决prometheus连接中断问题
+  tomcat:
+    connection-timeout: 20000
 
 spring:
   cloud:

@@ -64,6 +64,7 @@ public class Mp3T {
     private String composer;
     private String createTime;
     private String updateTime;
+    private Long startMillis;
 
     public String getUniKey() {
         return rj + seq;
