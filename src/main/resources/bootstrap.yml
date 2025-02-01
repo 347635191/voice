@@ -45,7 +45,6 @@ mybatis:
 
 #log配置
 logging:
-  config: classpath:logback-config.xml
   level:
     root: info
     org.springframework.boot.autoconfigure: error

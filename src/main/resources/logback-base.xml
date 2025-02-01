@@ -1,0 +1,208 @@
+<included>
+    <timestamp key="datetime" datePattern="yyyy-MM-dd"/>
+
+    <!-- DEBUG时打印logback内部信息 -->
+    <if condition='property("LOG_LEVEL").equals("DEBUG")'>
+        <then>
+            <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+        </then>
+    </if>
+
+    <!-- ConsoleAppender 控制台输出日志 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,CTT} ${PID} &lt;%X{traceId}&gt; [%thread] %-5level %logger:%L -%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- DEBUG级别日志 -->
+    <appender name="DEBUG_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 过滤器，只记录DEBUG级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <!--不匹配拒绝日志事件-->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--文件输出目录路径-->
+        <file>${BASE_PATH}/debug.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志压缩路径-->
+            <FileNamePattern>${BASE_PATH}/%d{yyyy-MM-dd}/debug.%i.log.gz</FileNamePattern>
+            <!--日志文件保留天数-->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <!--日志单体大小-->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!--日志最大容量-->
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+            <!--超过保留天数删除历史日志-->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,CTT} ${PID} &lt;%X{traceId}&gt; [%thread] %-5level %logger:%L -%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- INFO级别日志 -->
+    <appender name="INFO_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 过滤器，只记录INFO级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <!--不匹配拒绝日志事件-->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--文件输出目录路径-->
+        <file>${BASE_PATH}/info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志压缩路径-->
+            <FileNamePattern>${BASE_PATH}/%d{yyyy-MM-dd}/info.%i.log.gz</FileNamePattern>
+            <!--日志文件保留天数-->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <!--日志单体大小-->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!--日志最大容量-->
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+            <!--超过保留天数删除历史日志-->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,CTT} ${PID} &lt;%X{traceId}&gt; [%thread] %-5level %logger:%L -%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- WARN级别日志 -->
+    <appender name="WARN_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 过滤器，只记录WARN级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <!--不匹配拒绝日志事件-->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--文件输出目录路径-->
+        <file>${BASE_PATH}/warn.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志压缩路径-->
+            <FileNamePattern>${BASE_PATH}/%d{yyyy-MM-dd}/warn.%i.log.gz</FileNamePattern>
+            <!--日志文件保留天数-->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <!--日志单体大小-->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!--日志最大容量-->
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+            <!--超过保留天数删除历史日志-->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,CTT} ${PID} &lt;%X{traceId}&gt; [%thread] %-5level %logger:%L -%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ERROR级别日志 -->
+    <appender name="ERROR_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 过滤器，只记录ERROR级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <!--不匹配拒绝日志事件-->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!--文件输出目录路径-->
+        <file>${BASE_PATH}/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--日志压缩路径-->
+            <FileNamePattern>${BASE_PATH}/%d{yyyy-MM-dd}/error.%i.log.gz</FileNamePattern>
+            <!--日志文件保留天数-->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <!--日志单体大小-->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!--日志最大容量-->
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+            <!--超过保留天数删除历史日志-->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,CTT} ${PID} &lt;%X{traceId}&gt; [%thread] %-5level %logger:%L -%msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- INFO级别日志异步 -->
+    <appender name="INFO_LOG_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <neverBlock>true</neverBlock>
+        <queueSize>${LOG_QUEUE_SIZE}</queueSize>
+        <maxFlushTime>5000</maxFlushTime>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="INFO_LOG"/>
+    </appender>
+
+    <!-- WARN级别日志异步 -->
+    <appender name="WARN_LOG_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <neverBlock>true</neverBlock>
+        <queueSize>${LOG_QUEUE_SIZE}</queueSize>
+        <maxFlushTime>5000</maxFlushTime>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="WARN_LOG"/>
+    </appender>
+
+    <!-- ERROR级别日志异步 -->
+    <appender name="ERROR_LOG_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <neverBlock>true</neverBlock>
+        <queueSize>${LOG_QUEUE_SIZE}</queueSize>
+        <maxFlushTime>5000</maxFlushTime>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="ERROR_LOG"/>
+    </appender>
+
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${LOGSTASH_DESTINATION}</destination>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>Asia/Shanghai</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%d{yyyy-MM-dd HH:mm:ss.SSS,CTT}",
+                        "traceId": "%X{traceId}",
+                        "appName": "${APP_NAME}",
+                        "pid": "${PID}",
+                        "thread": "%thread",
+                        "level": "%level",
+                        "class": "%logger{40}",
+                        "message": "%message"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- root级别 -->
+    <root level="${LOG_LEVEL}">
+        <if condition='property("ENABLE_CONSOLE").equals("true")'>
+            <then>
+                <appender-ref ref="STDOUT"/>
+            </then>
+        </if>
+        <if condition='property("ENABLE_FILE").equals("true")'>
+            <then>
+                <appender-ref ref="DEBUG_LOG"/>
+                <appender-ref ref="INFO_LOG_ASYNC"/>
+                <appender-ref ref="WARN_LOG_ASYNC"/>
+                <appender-ref ref="ERROR_LOG_ASYNC"/>
+            </then>
+        </if>
+        <if condition='property("ENABLE_LOGSTASH").equals("true")'>
+            <then>
+                <appender-ref ref="LOGSTASH"/>
+            </then>
+        </if>
+    </root>
+</included>
