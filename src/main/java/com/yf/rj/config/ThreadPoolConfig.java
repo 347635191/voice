@@ -1,11 +1,11 @@
 package com.yf.rj.config;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import com.yf.rj.trace.TaskDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.*;
 
@@ -14,24 +14,21 @@ public class ThreadPoolConfig {
     private static final Logger LOG = LoggerFactory.getLogger(ThreadPoolConfig.class);
 
     @Bean
-    public ThreadPoolExecutor ioExecutor() {
+    public ThreadPoolTaskExecutor ioExecutor() {
         int count = Runtime.getRuntime().availableProcessors();
         LOG.info("虚拟机可用处理器个数：{}", count);
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(count, 2 * count
-                , 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(3000)
-                , new ThreadFactoryBuilder().setNameFormat("collect-mp3-attr-%d").build()
-                , new ThreadPoolExecutor.CallerRunsPolicy());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownGracefully(executor, "收集音频属性线程池")));
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(count);
+        executor.setMaxPoolSize(count * 2);
+        executor.setQueueCapacity(3000);
+        executor.setKeepAliveSeconds(60);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setThreadNamePrefix("collect-mp3-attr-");
+        executor.setTaskDecorator(TaskDecorator::decorate);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownGracefully(executor.getThreadPoolExecutor(), "收集音频属性线程池")));
+        executor.initialize();
         return executor;
-    }
-
-    @Bean
-    public ScheduledThreadPoolExecutor scheduledExecutor() {
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1,
-                new BasicThreadFactory.Builder().namingPattern("mp3-batch-insert-%d").build(),
-                new ThreadPoolExecutor.CallerRunsPolicy());
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownGracefully(scheduledExecutor, "音频批量入库线程池")));
-        return scheduledExecutor;
     }
 
     private void shutdownGracefully(ExecutorService executor, String poolName) {

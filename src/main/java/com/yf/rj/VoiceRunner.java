@@ -1,5 +1,7 @@
 package com.yf.rj;
 
+import com.yf.rj.util.TraceUtil;
+import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -20,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class VoiceRunner {
     public static void main(String[] args) {
+        MDC.put(TraceUtil.KEY, TraceUtil.create());
         SpringApplicationBuilder builder = new SpringApplicationBuilder(VoiceRunner.class);
         //解决不能使用剪切板的问题
         builder.headless(false).run(args);
