@@ -147,17 +147,17 @@ public class DailyServiceImpl implements DailyService {
                         return;
                     }
                     if (FileUtil.endAnyWithIgnoreCase(file, FileTypeEnum.MP3.getSuffix())
-                            && RegexUtil.invalidFileName(file.getName())) {
+                            && RegexUtil.invalidMp3Name(file.getName())) {
                         LOG.info("{}标题不合法", file.getName());
                         return;
                     }
-                    String word = RegexUtil.findFirst("(?<=\\d+\\.).*$", file.getName().replace(LrcConstants.H_LABEL, ""));
+                    String word = FileUtil.getCleanName(file.getName());
+                    //无需加空格隔开的
                     List<String> noSpace = Collections.singletonList("【H】");
                     String delimiter = noSpace.contains(prefix) ? StringUtils.EMPTY : StringUtils.SPACE;
                     String newFileName = file.getName().replace(word, prefix + delimiter + word);
                     String newPath = RegexUtil.last(file.getAbsolutePath(), "\\\\") + newFileName;
-                    boolean isRenamed = file.renameTo(new File(newPath));
-                    if (!isRenamed) {
+                    if (!file.renameTo(new File(newPath))) {
                         LOG.warn("{}修改文件名失败", file.getAbsolutePath());
                     }
                 });
@@ -390,7 +390,13 @@ public class DailyServiceImpl implements DailyService {
             if (DailyEnum.ADD_TO_CHINESE_LRC.getCode().equals(dailyReq.getCode())) {
                 word = LrcConstants.UN_CHINESE;
             } else {
-                word = RegexUtil.findFirst("(?<=\\d+\\.).*$", prePath.replace(LrcConstants.H_LABEL, ""));
+                String absolutePath = prePath + FileTypeEnum.MP3.getSuffix();
+                String fileName = FileUtil.getFileName(absolutePath);
+                //检查文件名正确性
+                if (RegexUtil.invalidMp3Name(fileName)) {
+                    throw new BaseException("文件名非法：" + absolutePath);
+                }
+                word = FileUtil.getCleanNameFromPath(absolutePath);
             }
             FileUtil.write(prePath + FileConstants.LRC_SUFFIX,
                     MessageFormat.format(LrcConstants.ADD_LRC_WORD, word));

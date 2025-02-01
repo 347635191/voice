@@ -22,7 +22,6 @@ public class SyncServiceImpl implements SyncService {
         long start = System.currentTimeMillis();
         fullDispatchHandler.clearData();
         fullDispatchHandler.commonHandle();
-        fullDispatchHandler.waitSyncFinished();
         LOG.info("全量同步耗时：{}", DateUtil.convert(System.currentTimeMillis() - start));
     }
 }

@@ -4,6 +4,7 @@ import com.yf.rj.cache.Mp3Db;
 import com.yf.rj.common.FileConstants;
 import com.yf.rj.common.RjConstants;
 import com.yf.rj.config.DlSiteProperties;
+import com.yf.rj.config.WordProperties;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.FileTypeEnum;
 import com.yf.rj.enums.TrackEnum;
@@ -41,8 +42,6 @@ import java.util.Optional;
 @Service
 public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(TrackServiceImpl.class);
-    private static final String[] EXCLUDE_WORDS = new String[]{"乙女", "女性向", "耽美"};
-    private static final String[] INCLUDE_WORDS = new String[]{"失禁", "放尿", "女同", "蕾丝"};
 
     @Resource
     private TrackHandler trackHandler;
@@ -111,7 +110,7 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                 }
                 //TAG
                 String cell3 = XmlUtil.getCellVal(row.getCell(3));
-                if (StringUtils.containsAny(cell3, EXCLUDE_WORDS)) {
+                if (StringUtils.containsAny(cell3, WordProperties.getTrackExclude())) {
                     continue;
                 }
                 //RJ
@@ -134,11 +133,11 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                 }
                 //查询是否是全年龄
                 String searchInfo = trackHandler.search(rj);
-                if (StringUtils.containsAny(searchInfo, EXCLUDE_WORDS)) {
+                if (StringUtils.containsAny(searchInfo, WordProperties.getTrackExclude())) {
                     LOG.info("{}触发关键字跳过：{}", rj, searchInfo);
                     continue;
                 }
-                if (!StringUtils.containsAny(cell3, INCLUDE_WORDS)) {
+                if (!StringUtils.containsAny(cell3, WordProperties.getTrackInclude())) {
                     if (searchInfo.contains("\"age_category_string\":\"general\"")) {
                         LOG.info("{}全年龄跳过", rj);
                         continue;

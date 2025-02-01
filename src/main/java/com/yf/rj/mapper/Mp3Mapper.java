@@ -1,6 +1,5 @@
 package com.yf.rj.mapper;
 
-import com.yf.rj.entity.CategoryT;
 import com.yf.rj.entity.Mp3T;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

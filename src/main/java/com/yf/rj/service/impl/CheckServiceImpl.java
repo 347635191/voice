@@ -87,8 +87,7 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
                             if (LrcConstants.UN_CHINESE.equals(word)) {
                                 return;
                             }
-                            String name = lrcFile.getName().replaceAll(LrcConstants.H_LABEL, StringUtils.EMPTY);
-                            name = RegexUtil.findFirst("(?<=\\.).*?(?=\\.lrc)", name);
+                            String name = FileUtil.getCleanName(lrcFile.getName());
                             if (!word.equals(name)) {
                                 result.add(lrcFile.getAbsolutePath() + "单字幕不正确");
                                 result.add("字幕：" + word);
@@ -133,7 +132,7 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
             List<String> lrcNameList = collect.get(Boolean.FALSE);
             String rj = FileUtil.getRj(dir);
             //检查mp3名称
-            String invalidMp3 = mp3NameList.stream().filter(RegexUtil::invalidFileName).collect(Collectors.joining(", "));
+            String invalidMp3 = mp3NameList.stream().filter(RegexUtil::invalidMp3Name).collect(Collectors.joining(", "));
             if (StringUtils.isNotBlank(invalidMp3)) {
                 result.add(rj + "的音频名称非法：" + invalidMp3);
             }

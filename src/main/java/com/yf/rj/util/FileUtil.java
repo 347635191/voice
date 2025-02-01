@@ -1,6 +1,7 @@
 package com.yf.rj.util;
 
 import com.yf.rj.common.FileConstants;
+import com.yf.rj.common.LrcConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.entity.Mp3T;
 import com.yf.rj.enums.FileTypeEnum;
@@ -114,6 +115,27 @@ public class FileUtil {
         } catch (Exception e) {
             LOG.error("获取属性失败，{}|文件名：{}", getRj(file), file.getName());
         }
+    }
+
+    public static String getFileName(String path){
+        //找到最后一个右斜杠后面的内容
+        return RegexUtil.findFirst("[^\\\\]+$", path);
+    }
+
+    /**
+     * D:\\1.【H】悠.mp3 => 悠
+     */
+    public static String getCleanNameFromPath(String path) {
+        String fileName = getFileName(path);
+        return getCleanName(fileName);
+    }
+
+    /**
+     * 1.【H】悠.mp3 => 悠
+     */
+    public static String getCleanName(String fileName){
+        return RegexUtil.findFirst("(?<=\\d{1,3}\\.).*?(?=(.mp3|.lrc))", fileName)
+                .replaceAll(LrcConstants.H_LABEL, StringUtils.EMPTY);
     }
 
     public static String getRj(File file) {

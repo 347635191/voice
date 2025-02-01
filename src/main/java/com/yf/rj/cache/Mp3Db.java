@@ -34,7 +34,6 @@ public class Mp3Db {
         //堆内持久化
         CACHE = new TransactionalIndexedCollection<>(Mp3T.class);
         //添加索引
-        CACHE.addIndex(UniqueIndex.onAttribute(Index.ID));
         CACHE.addIndex(HashIndex.onAttribute(Index.RJ));
 //        CACHE.addIndex(SuffixTreeIndex.onAttribute(Index.SERIES));
         //复合唯一索引
@@ -43,7 +42,6 @@ public class Mp3Db {
 
     public static final class Index {
         //创建属性的访问者对象
-        public static final Attribute<Mp3T, Long> ID = attribute("ID", Mp3T::getId);
         public static final Attribute<Mp3T, String> RJ = attribute("RJ", Mp3T::getRj);
         public static final Attribute<Mp3T, String> ARTIST = attribute("ARTIST", Mp3T::getArtist);
         public static final Attribute<Mp3T, String> UNI_KEY = attribute("UNI_KEY", Mp3T::getUniKey);
@@ -60,8 +58,8 @@ public class Mp3Db {
             return;
         }
         List<Mp3T> delList, insList;
-        List<Long> idList = mp3TList.stream().map(Mp3T::getId).collect(Collectors.toList());
-        try (ResultSet<Mp3T> result = CACHE.retrieve(in(Index.ID, idList))) {
+        List<String> uniKeyList = mp3TList.stream().map(Mp3T::getUniKey).collect(Collectors.toList());
+        try (ResultSet<Mp3T> result = CACHE.retrieve(in(Index.UNI_KEY, uniKeyList))) {
             delList = result.stream().collect(Collectors.toList());
             insList = delete ? Collections.emptyList() : mp3TList;
         }

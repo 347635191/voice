@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class ThreadPoolConfig {
@@ -23,10 +25,26 @@ public class ThreadPoolConfig {
         executor.setQueueCapacity(3000);
         executor.setKeepAliveSeconds(60);
         executor.setAllowCoreThreadTimeOut(true);
-        executor.setThreadNamePrefix("collect-mp3-attr-");
+        executor.setThreadNamePrefix("mp3-collect-attr-");
         executor.setTaskDecorator(TaskDecorator::decorate);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownGracefully(executor.getThreadPoolExecutor(), "收集音频属性线程池")));
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor dbExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(3000);
+        executor.setKeepAliveSeconds(30);
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.setThreadNamePrefix("mp3-async-insert-");
+        executor.setTaskDecorator(TaskDecorator::decorate);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownGracefully(executor.getThreadPoolExecutor(), "音频异步入库线程池")));
         executor.initialize();
         return executor;
     }

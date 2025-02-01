@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -29,6 +30,7 @@ public class TestController {
     @GetMapping("/pool")
     public Result pool() {
         LettuceClientConfiguration clientConfiguration = ((LettuceConnectionFactory) applicationContext.getBean(RedisConnectionFactory.class)).getClientConfiguration();
+        log.info("测试redis连接池{}", UUID.randomUUID());
         return Result.success(clientConfiguration.getClass().getName());
     }
 
