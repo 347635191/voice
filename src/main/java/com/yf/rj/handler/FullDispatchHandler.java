@@ -71,7 +71,7 @@ public class FullDispatchHandler implements FileUnify<Object> {
         Mp3T mp3T = new Mp3T();
         mp3T.setStartMillis(System.currentTimeMillis());
         //补充其他属性
-        FileUtil.fixAttr(file, mp3T);
+        FileUtil.fixAttr(file, mp3T, true);
         //分类id
         fixCategoryId(file, mp3T);
         //RJ号

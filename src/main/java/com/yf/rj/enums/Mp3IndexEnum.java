@@ -22,7 +22,9 @@ public enum Mp3IndexEnum {
     GENRE("3", Mp3Db.Index.GENRE, Mp3T::getGenre),
     COMMENT("4", Mp3Db.Index.COMMENT, Mp3T::getComment),
     RJ_NAME("5", Mp3Db.Index.RJ_NAME, Mp3T::getRjName),
-    FILE_NAME("6", Mp3Db.Index.FILE_NAME, Mp3T::getFileName);
+    FILE_NAME("6", Mp3Db.Index.FILE_NAME, Mp3T::getFileName),
+    ALBUM("7", null, null),
+    TITLE("8", null, null);
     private String code;
     private Attribute<Mp3T, String> index;
     private static final Map<String, Mp3IndexEnum> values = Arrays.stream(Mp3IndexEnum.values())

@@ -262,6 +262,8 @@ public class CheckServiceImpl implements CheckService, FileUnify<List<String>> {
         }));
         List<Mp3T> seriesMp3List = collect.get(Boolean.TRUE);
         LOG.info("查询到系列文件夹的音频：{}", seriesMp3List.size());
+        List<String> noSeriesList = seriesMp3List.stream().filter(mp3 -> StringUtils.isBlank(mp3.getSeries())).map(Mp3T::getRj).distinct().collect(Collectors.toList());
+        noSeriesList.forEach(rj -> result.add(rj + "在系列文件夹里但没有系列"));
         List<String> seriesList = seriesMp3List.stream().map(Mp3T::getSeries).distinct().collect(Collectors.toList());
         List<Mp3T> classifyMp3List = collect.get(Boolean.FALSE);
         LOG.info("查询到分类文件夹含系列的音频：{}", classifyMp3List.size());

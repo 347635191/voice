@@ -25,7 +25,7 @@
     <!-- 开启日志文件打印 -->
     <springProperty scope="context" name="ENABLE_FILE" source="logging.file-enabled" defaultValue="false"/>
     <!-- 开启logstash日志打印 -->
-    <springProperty scope="context" name="ENABLE_LOGSTASH" source="logging.logstash-enabled" defaultValue="true"/>
+    <springProperty scope="context" name="ENABLE_LOGSTASH" source="logging.logstash-enabled" defaultValue="false"/>
     <!-- logstash destination -->
     <springProperty scope="context" name="LOGSTASH_DESTINATION" source="logging.logstash-destination" defaultValue="192.168.202.111:5044"/>
     <!-- 自定义扩展文件 -->

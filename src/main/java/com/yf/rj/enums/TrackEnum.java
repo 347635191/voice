@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Getter
 public enum TrackEnum {
-    CHECK_SERIES("0"),//检查系列实时性
+    CHECK_ATTR("0"),//检查音声属性实时性
     CHECK_DL_TREE("1"),//检查DL tree.xlsx里未整理的
     DOWNLOAD_PIC("2"),//从DL SITE下载图片
     ;

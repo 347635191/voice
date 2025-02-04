@@ -3,7 +3,8 @@ package com.yf.rj.handler;
 import com.yf.rj.common.FileConstants;
 import com.yf.rj.config.AsmrOneProperties;
 import com.yf.rj.config.DlSiteProperties;
-import com.yf.rj.util.RegexUtil;
+import com.yf.rj.entity.Mp3T;
+import com.yf.rj.util.DlSiteDomUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +35,13 @@ public class TrackHandler {
     @Resource
     private AsmrOneProperties asmrOneProperties;
 
-    public String getSeries(String rj) {
+    public Mp3T getMp3Attr(String rj) {
         try {
-            String result = proxyTemplate.getForObject(MessageFormat.format(dlSiteProperties.getHtmlUrl(), rj), String.class);
-            return RegexUtil.getDlSiteSeries(result);
+            String html = proxyTemplate.getForObject(MessageFormat.format(dlSiteProperties.getHtmlUrl(), rj), String.class);
+            return DlSiteDomUtil.getDlSiteAttr(html);
         } catch (Exception e) {
             LOG.warn("{}爬系列失败", rj, e);
-            return "-1";
+            return null;
         }
     }
 

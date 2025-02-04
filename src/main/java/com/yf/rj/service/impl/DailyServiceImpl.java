@@ -2,16 +2,12 @@ package com.yf.rj.service.impl;
 
 import com.yf.rj.common.FileConstants;
 import com.yf.rj.common.LrcConstants;
-import com.yf.rj.common.SymbolConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.DailyEnum;
 import com.yf.rj.enums.FileTypeEnum;
 import com.yf.rj.req.DailyReq;
 import com.yf.rj.service.DailyService;
-import com.yf.rj.util.ClipboardUtil;
-import com.yf.rj.util.FileUtil;
-import com.yf.rj.util.RegexUtil;
-import com.yf.rj.util.WordUtil;
+import com.yf.rj.util.*;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -24,7 +20,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Service
 public class DailyServiceImpl implements DailyService {
@@ -225,11 +220,7 @@ public class DailyServiceImpl implements DailyService {
      */
     private String getArtist() throws BaseException {
         String words = ClipboardUtil.read();
-        words = words.replaceAll("(琴音有波\\(紅月ことね\\))|(紅月ことね)", "琴音有波");
-        words = words.replaceAll("(乙倉ゅい（乙倉由依）)|(乙倉ゅい\\(乙倉由依\\))", "乙倉ゅい");
-        String artist = Arrays.stream(words.split(SymbolConstants.ARTIST_DELIMITER))
-                .map(StringUtils::trim).sorted()
-                .collect(Collectors.joining(SymbolConstants.COMMENT_DELIMITER));
+        String artist = DlSiteDomUtil.formatArtist(words);
         if (StringUtils.isBlank(artist)) {
             throw new BaseException("获取声优为空");
         }
@@ -242,14 +233,7 @@ public class DailyServiceImpl implements DailyService {
      */
     private String getComment() throws BaseException {
         String words = ClipboardUtil.read();
-        words = words.replaceAll("大量汁/液", "大量汁液");
-        String comment = Arrays.stream(words.split(StringUtils.SPACE)).map(StringUtils::trim)
-                .map(word -> {
-                    word = word.replaceAll("[（(]", SymbolConstants.COMMENT_DELIMITER);
-                    word = word.replaceAll("[）)]", "");
-                    return word.split(SymbolConstants.COMMENT_DELIMITER);
-                }).flatMap(Arrays::stream).map(StringUtils::trim).sorted()
-                .collect(Collectors.joining(SymbolConstants.COMMENT_DELIMITER));
+        String comment = DlSiteDomUtil.formatComment(words);
         if (StringUtils.isBlank(comment)) {
             throw new BaseException("获取标签为空");
         }

@@ -142,6 +142,11 @@
             <artifactId>cqengine</artifactId>
             <version>3.4.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
         <!--配置项提示-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

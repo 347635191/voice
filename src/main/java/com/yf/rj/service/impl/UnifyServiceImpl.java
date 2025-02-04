@@ -2,6 +2,7 @@ package com.yf.rj.service.impl;
 
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.enums.FileTypeEnum;
+import com.yf.rj.enums.Mp3IndexEnum;
 import com.yf.rj.enums.UnifyEnum;
 import com.yf.rj.req.UnifyReq;
 import com.yf.rj.service.FileUnify;
@@ -100,7 +101,12 @@ public class UnifyServiceImpl implements UnifyService, FileUnify<Integer> {
                     .orElse(new ArrayList<>())
                     .stream()
                     .filter(FileTypeEnum.MP3::match)
-                    .forEach(file -> setTitleAndAlbum(file, albumName));
+                    .forEach(file -> {
+                        Map<Mp3IndexEnum, String> map = new HashMap<>();
+                        map.put(Mp3IndexEnum.TITLE, file.getName());
+                        map.put(Mp3IndexEnum.ALBUM, albumName);
+                        FileUtil.writeAttr(file, map);
+                    });
             return null;
         });
         return "统一设置标题和唱片集成功";
@@ -115,18 +121,6 @@ public class UnifyServiceImpl implements UnifyService, FileUnify<Integer> {
             if (oldChar != newChar && !IGNORE_TRA.contains(String.valueOf(oldChar))) {
                 result.add(oldChar + "，" + newChar);
             }
-        }
-    }
-
-    private void setTitleAndAlbum(File file, String album) {
-        try {
-            MP3File mp3File = new MP3File(file);
-            AbstractID3v2Tag id3v2Tag = mp3File.getID3v2Tag();
-            id3v2Tag.setField(FieldKey.ALBUM, album);
-            id3v2Tag.setField(FieldKey.TITLE, file.getName());
-            mp3File.save();
-        } catch (Exception e) {
-            throw new RuntimeException(file.getAbsolutePath() + "设置标题和唱片集失败");
         }
     }
 }

@@ -5,6 +5,7 @@ import com.yf.rj.common.LrcConstants;
 import com.yf.rj.dto.BaseException;
 import com.yf.rj.entity.Mp3T;
 import com.yf.rj.enums.FileTypeEnum;
+import com.yf.rj.enums.Mp3IndexEnum;
 import com.yf.rj.enums.ReplaceTypeEnum;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -63,24 +65,32 @@ public class FileUtil {
         }
     }
 
-    public static void fixAttr(File file, Mp3T mp3T) {
+    public static void fixAttr(File file, Mp3T mp3T, boolean all) {
         MP3File mp3File;
         try {
             mp3File = new MP3File(file);
-            MP3AudioHeader header = mp3File.getMP3AudioHeader();
-            //比特率
-            mp3T.setBitRate(Integer.parseInt(header.getBitRate()));
-
-            AbstractID3v2Tag id3v2Tag = mp3File.getID3v2Tag();
-            //标题
-            String title = id3v2Tag.getFirst(FieldKey.TITLE);
-            if (StringUtils.isNotBlank(title)) {
-                mp3T.setTitle(title);
+            if (all) {
+                MP3AudioHeader header = mp3File.getMP3AudioHeader();
+                //比特率
+                mp3T.setBitRate(Integer.parseInt(header.getBitRate()));
             }
-            //唱片集
-            String album = id3v2Tag.getFirst(FieldKey.ALBUM);
-            if (StringUtils.isNotBlank(album)) {
-                mp3T.setAlbum(album);
+            AbstractID3v2Tag id3v2Tag = mp3File.getID3v2Tag();
+            if (all) {
+                //标题
+                String title = id3v2Tag.getFirst(FieldKey.TITLE);
+                if (StringUtils.isNotBlank(title)) {
+                    mp3T.setTitle(title);
+                }
+                //唱片集
+                String album = id3v2Tag.getFirst(FieldKey.ALBUM);
+                if (StringUtils.isNotBlank(album)) {
+                    mp3T.setAlbum(album);
+                }
+                //汉化组名称
+                String genre = id3v2Tag.getFirst(FieldKey.GENRE);
+                if (StringUtils.isNotBlank(genre)) {
+                    mp3T.setGenre(genre);
+                }
             }
             //声优
             String artist = id3v2Tag.getFirst(FieldKey.ARTIST);
@@ -91,11 +101,6 @@ public class FileUtil {
             String year = id3v2Tag.getFirst(FieldKey.YEAR);
             if (StringUtils.isNotBlank(year)) {
                 mp3T.setYear(year);
-            }
-            //汉化组名称
-            String genre = id3v2Tag.getFirst(FieldKey.GENRE);
-            if (StringUtils.isNotBlank(genre)) {
-                mp3T.setGenre(genre);
             }
             //标签
             String comment = id3v2Tag.getFirst(FieldKey.COMMENT);
@@ -117,7 +122,7 @@ public class FileUtil {
         }
     }
 
-    public static String getFileName(String path){
+    public static String getFileName(String path) {
         //找到最后一个右斜杠后面的内容
         return RegexUtil.findFirst("[^\\\\]+$", path);
     }
@@ -133,7 +138,7 @@ public class FileUtil {
     /**
      * 1.【H】悠.mp3 => 悠
      */
-    public static String getCleanName(String fileName){
+    public static String getCleanName(String fileName) {
         return RegexUtil.findFirst("(?<=\\d{1,3}\\.).*?(?=(.mp3|.lrc))", fileName)
                 .replaceAll(LrcConstants.H_LABEL, StringUtils.EMPTY);
     }
@@ -380,5 +385,42 @@ public class FileUtil {
         word = word.replaceAll("[.。!！,，?？;；]$", StringUtils.EMPTY);
         word = word.replaceAll("\\s+", StringUtils.SPACE);
         return time + word.trim();
+    }
+
+    public static void writeAttrFromDir(File dir, Map<Mp3IndexEnum, String> map) {
+        Optional.ofNullable(dir.listFiles())
+                .map(Arrays::asList)
+                .orElse(new ArrayList<>())
+                .stream()
+                .filter(FileTypeEnum.MP3::match)
+                .forEach(mp3File -> writeAttr(mp3File, map));
+    }
+
+    public static void writeAttr(File file, Map<Mp3IndexEnum, String> map) {
+        if(map.isEmpty()){
+            return;
+        }
+        try {
+            MP3File mp3File = new MP3File(file);
+            AbstractID3v2Tag id3v2Tag = mp3File.getID3v2Tag();
+            for (Map.Entry<Mp3IndexEnum, String> entry : map.entrySet()) {
+                Mp3IndexEnum indexEnum = entry.getKey();
+                String newAttr = entry.getValue();
+                switch (indexEnum) {
+                    case TITLE:
+                        id3v2Tag.setField(FieldKey.TITLE, newAttr);
+                        break;
+                    case ALBUM:
+                        id3v2Tag.setField(FieldKey.ALBUM, newAttr);
+                        break;
+                    case COMMENT:
+                        id3v2Tag.setField(FieldKey.COMMENT, newAttr);
+                        break;
+                }
+            }
+            mp3File.save();
+        } catch (Exception e) {
+            throw new RuntimeException(file.getAbsolutePath() + "设置音频属性失败");
+        }
     }
 }

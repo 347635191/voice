@@ -13,6 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -70,10 +71,10 @@ public class TestController {
     }
 
     @GetMapping("/track")
-    public Result track() {
-        String series = trackHandler.getSeries("RJ01256002");
-        log.info("系列：{}", series);
-        return Result.success(series);
+    public Result track(@RequestParam("rj") String rj) {
+        Mp3T mp3Attr = trackHandler.getMp3Attr(rj);
+        log.info("音声属性：{}", mp3Attr);
+        return Result.success(mp3Attr);
     }
 
     @GetMapping("/mapstruct")

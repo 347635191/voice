@@ -10,13 +10,16 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * .匹配除换行符以外的所有字符
+ * [\s\S]匹配任意字符
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RegexUtil {
     private static final String LRC_LINE_REGEX = "\\[\\d{2,3}:\\d{2}.\\d{2}].*";
     private static final String LRC_SPACE_LINE_REGEX = "\\[\\d{2,3}:\\d{2}.\\d{2}] ";
     private static final String MP3_NAME_REGEX = "\\d{1,3}.(【H】)?[\\u4e00-\\u9fa5\\d A-Z&→%？a-z○αβ=≠\\-+〇≤⇒~×.]+.mp3";
     private static final String RJ_NAME_REGEX = "RJ\\d+ [\\u4e00-\\u9fa5 A-Za-z&×\\d→〇⇒+%x.]+";
-    private static final String DL_SITE_SERIES_REGEX = "(?<=<span itemprop=\"name\">「).*?(?=」シリーズ)";
 
     public static String findFirst(String regex, String text) {
         Matcher matcher = Pattern.compile(regex).matcher(text);
@@ -83,9 +86,5 @@ public class RegexUtil {
      */
     public static String middle(String text, String before, String behind) {
         return RegexUtil.findFirst("(?<=" + before + ").*?(?=" + behind + ")", text);
-    }
-
-    public static String getDlSiteSeries(String htmlText) {
-        return findFirst(DL_SITE_SERIES_REGEX, htmlText);
     }
 }

@@ -6,6 +6,7 @@ import com.yf.rj.common.RjConstants;
 import com.yf.rj.config.DlSiteProperties;
 import com.yf.rj.config.WordProperties;
 import com.yf.rj.dto.BaseException;
+import com.yf.rj.entity.Mp3T;
 import com.yf.rj.enums.FileTypeEnum;
 import com.yf.rj.enums.TrackEnum;
 import com.yf.rj.handler.TrackHandler;
@@ -21,8 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jaudiotagger.tag.FieldKey;
-import org.jsoup.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,10 +33,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
@@ -51,8 +47,8 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
     @Override
     public Object common(TrackReq trackReq) throws BaseException {
         switch (TrackEnum.fromCode(trackReq.getCode())) {
-            case CHECK_SERIES:
-                return checkSeries();
+            case CHECK_ATTR:
+                return checkAttr();
             case CHECK_DL_TREE:
                 return checkDlTree();
             case DOWNLOAD_PIC:
@@ -95,6 +91,7 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
 
     /**
      * 检查DL tree.xlsx里未整理的
+     * 执行前关闭已经打开的文件
      */
     private Object checkDlTree() throws BaseException {
         StringBuilder result = new StringBuilder("原版\t中文版\n");
@@ -119,13 +116,18 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                     continue;
                 }
                 //MEGA链接
-                String megaUrl = XmlUtil.getCellVal(row.getCell(2));
-                if (!StringUtils.contains(megaUrl, "mega.nz")) {
-                    LOG.info("{}无mega档跳过，{}", rj, megaUrl);
+//                String megaUrl = XmlUtil.getCellVal(row.getCell(2));
+//                if (!StringUtils.contains(megaUrl, "mega.nz")) {
+//                    LOG.info("{}无mega档跳过，{}", rj, megaUrl);
+//                    continue;
+//                }
+                //类型
+                String type = XmlUtil.getCellVal(row.getCell(7));
+                if (!StringUtils.contains(type, "音声")) {
                     continue;
                 }
                 //是否已整理
-                if (StringUtil.isBlank(rj) || CollectionUtils.isNotEmpty(Mp3Db.queryByRj(rj))) {
+                if (StringUtils.isBlank(rj) || CollectionUtils.isNotEmpty(Mp3Db.queryByRj(rj))) {
                     continue;
                 }
                 if (result.toString().contains(rj)) {
@@ -162,12 +164,13 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
     }
 
     /**
-     * 检查系列实时性
+     * 检查音声属性实时性
      */
-    private Object checkSeries() throws BaseException {
+    private Object checkAttr() throws BaseException {
         StringBuilder result = new StringBuilder();
-        result.append("rj号").append("\t").append("当前系列")
-                .append("\t").append("爬取系列").append("\n");
+        result.append("rj号").append("\t").append("属性").append("\t").append("当前")
+                .append("\t").append("爬取").append("\n");
+        List<String> unTrakedList = new ArrayList<>();
         handleThird(FileTypeEnum.DIR, dir -> {
             Optional.ofNullable(dir.listFiles())
                     .map(Arrays::asList)
@@ -175,20 +178,11 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
                     .stream()
                     .filter(FileTypeEnum.MP3::match)
                     .findFirst()
-                    .ifPresent(mp3File -> {
-                        String rj = FileUtil.getRj(dir);
-                        String curSeries = FileUtil.getField(mp3File, FieldKey.ALBUM_ARTIST);
-                        String newSeries = trackHandler.getSeries(rj);
-                        if (StringUtils.isAllBlank(curSeries, newSeries)) {
-                            return;
-                        }
-                        if (!StringUtils.equals(curSeries, newSeries)) {
-                            result.append(rj).append("\t").append(curSeries)
-                                    .append("\t").append(newSeries).append("\n");
-                        }
-                    });
+                    .ifPresent(mp3File -> doCheckAttr(dir, mp3File, result, unTrakedList));
             return null;
         });
+        result.append("=================================================================\n\n");
+        result.append(String.join(" , ", unTrakedList));
         try (BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(
                 Paths.get(FileConstants.DESKTOP_DIR + "\\" + FileConstants.CHECK_SERIES_OUT))))) {
             bufferedWriter.write(result.toString());
@@ -197,5 +191,32 @@ public class TrackServiceImpl implements TrackService, FileUnify<Integer> {
             throw new BaseException("创建文件失败");
         }
         return "检查系列实时性成功";
+    }
+
+    private void doCheckAttr(File dir, File mp3File, StringBuilder result, List<String> unTrakedList) {
+        String rj = FileUtil.getRj(dir);
+        //dlSite实时的MP3属性
+        Mp3T newMp3 = trackHandler.getMp3Attr(rj);
+        if (newMp3 == null) {
+            unTrakedList.add(rj);
+            return;
+        }
+        //本地MP3属性
+        Mp3T oldMp3 = new Mp3T();
+        FileUtil.fixAttr(mp3File, oldMp3, false);
+
+        checkSingleAttr("社团", oldMp3.getComposer(), newMp3.getComposer(), result, rj);
+        checkSingleAttr("年份", oldMp3.getYear(), newMp3.getYear(), result, rj);
+        checkSingleAttr("系列", oldMp3.getSeries(), newMp3.getSeries(), result, rj);
+        checkSingleAttr("声优", oldMp3.getArtist(), newMp3.getArtist(), result, rj);
+        checkSingleAttr("标签", oldMp3.getComment(), newMp3.getComment(), result, rj);
+    }
+
+    private void checkSingleAttr(String tag, String oldAttr, String newAttr, StringBuilder result, String rj) {
+        if (!StringUtils.isAllBlank(oldAttr, newAttr) && !StringUtils.equals(oldAttr, newAttr)) {
+            LOG.info("{}\t{}\t{}\t{}", rj, tag, oldAttr, newAttr);
+            result.append(rj).append("\t").append(tag).append("\t").append(oldAttr)
+                    .append("\t").append(newAttr).append("\n");
+        }
     }
 }
